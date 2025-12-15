@@ -1,11 +1,11 @@
-# This file defines standard colors than can be used by any module using importName.color
-
 # Global
 WHITE = (255, 255, 255)
 GRAY = (128, 129, 129)
 BLACK = (0, 0, 0)
 GREEN = (115, 191, 44)
 RED = (230, 30, 30)
+BROWN = (160, 120, 60)
+YELLOW = (180, 180, 0)
 
 # Snake
 SNAKE_LIGHT = (170, 255, 120)
@@ -16,4 +16,13 @@ APPLE_LIGHT = (255, 110, 110)
 APPLE_BASE = RED
 APPLE_DARK = (180, 10, 10)
 
-
+# Doodle Jump
+DJ_PLAYER_LIGHT = (255, 255, 100)
+DJ_PLAYER_BASE = (255, 220, 0)
+DJ_PLAYER_DARK = (180, 150, 0)
+DJ_PLATFORM_LIGHT = (150, 255, 150)
+DJ_PLATFORM_BASE = GREEN
+DJ_PLATFORM_DARK = (0, 100, 0)
+GROUND_BROWN_LIGHT = (210, 180, 140)
+GROUND_BROWN_BASE = BROWN
+GROUND_BROWN_DARK = (100, 70, 40)

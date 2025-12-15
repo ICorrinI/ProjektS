@@ -1,5 +1,5 @@
 import pygame
-import Settings.colors as c
+import Settings.colors as fc
 import Settings.settings as s
 import Settings.score as score
 try:
@@ -40,9 +40,9 @@ def draw_score(screen, number):
             right_pos_x = left_pos_x + (5 * s.PIXEL_WIDTH)
             pos_y = s.SCORE_POSITION_Y + (i * s.PIXEL_WIDTH)
             if(score.SCORE[number_left][i][j]):
-                pygame.draw.rect(screen, c.WHITE, (left_pos_x, pos_y, s.PIXEL_WIDTH, s.PIXEL_WIDTH))# Left Number
+                pygame.draw.rect(screen, fc.WHITE, (left_pos_x, pos_y, s.PIXEL_WIDTH, s.PIXEL_WIDTH))# Left Number
             if(score.SCORE[number_right][i][j]):
-                pygame.draw.rect(screen, c.WHITE, (right_pos_x, pos_y, s.PIXEL_WIDTH, s.PIXEL_WIDTH))# Right Number
+                pygame.draw.rect(screen, fc.WHITE, (right_pos_x, pos_y, s.PIXEL_WIDTH, s.PIXEL_WIDTH))# Right Number
 
 # does shading for 4px Blocks
 def draw_shaded_block(screen, rect, light, base, dark):
@@ -59,3 +59,21 @@ def draw_shaded_block(screen, rect, light, base, dark):
 
     # Quad 4 – unten rechts (dunkel)
     pygame.draw.rect(screen, dark, (rect.x + bs, rect.y + bs, bs, bs))
+
+def draw_tiled_block(screen, rect, camera_y, light, base, dark):
+    BLOCK = s.BLOCK_SIZE
+    screen_rect = pygame.Rect(rect.x, rect.y - camera_y, rect.width, rect.height)
+
+    BLOCK_W = screen_rect.width // BLOCK
+    BLOCK_H = screen_rect.height // BLOCK
+
+    for by in range(BLOCK_H):
+        for bx in range(BLOCK_W):
+            cell = pygame.Rect(
+                screen_rect.x + bx * BLOCK,
+                screen_rect.y + by * BLOCK,
+                BLOCK,
+                BLOCK
+            )
+            draw_shaded_block(screen, cell, light, base, dark)
+

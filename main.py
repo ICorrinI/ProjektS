@@ -6,6 +6,7 @@ import Settings.colors as fc
 from Settings.icons import *
 from Settings.output import draw_matrix, draw_matrix_representation
 from Snake.snake import snake_game
+from DoodleJump.doodlejump import doodle_jump_game
 
 started_on_pi = True
 try:
@@ -68,9 +69,13 @@ while(run):
             elif event.key == K_DOWN:
                 select_box_y = s.SCREEN_HALF
             elif event.key == K_RETURN:
-                # Snake (bottom-left) + Exit (bottom-right)
+                # Snake
                 if select_box_x == 0 and select_box_y == 0:
-                    snake_game(screen, matrix, offset_canvas)
+                    snake_game(screen, matrix, offset_canvas, started_on_pi)
+                # Doodle Jump
+                elif select_box_x == s.SCREEN_HALF and select_box_y == 0:
+                    doodle_jump_game(screen, matrix, offset_canvas, started_on_pi)
+                # Exit
                 elif select_box_x == s.SCREEN_HALF and select_box_y == s.SCREEN_HALF:
                     run = False
 
@@ -95,8 +100,8 @@ while(run):
     # Top-left = snake
     draw_icon_snake(screen, 0, 0)
 
-    # Top-right = X
-    draw_icon_x(screen, s.SCREEN_HALF, 0)
+    # Top-right = doodle jump
+    draw_icon_doodle_jump(screen, s.SCREEN_HALF, 0)
 
     # Bottom-left = X
     draw_icon_x(screen, 0, s.SCREEN_HALF)

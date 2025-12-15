@@ -5,14 +5,7 @@ from Settings.output import draw_matrix_representation, draw_matrix, draw_score,
 from Settings.colors import *
 from Settings.settings import SNAKE_SPEED, SCREEN_WIDTH, SCREEN_HEIGHT, BLOCK_SIZE
 
-started_on_pi = True
-try:
-    from rgbmatrix import RGBMatrix, RGBMatrixOptions
-except ImportError:
-    started_on_pi = False
-
-
-def snake_game(screen, matrix, offset_canvas):
+def snake_game(screen, matrix, offset_canvas, started_on_pi):
     clock = pygame.time.Clock()
 
     class Snake:
