@@ -7,6 +7,7 @@ from Settings.icons import *
 from Settings.output import draw_matrix, draw_matrix_representation
 from Snake.snake import snake_game
 from DoodleJump.doodlejump import doodle_jump_game
+from Dino.dino import dino_game
 
 started_on_pi = True
 try:
@@ -75,6 +76,9 @@ while(run):
                 # Doodle Jump
                 elif select_box_x == s.SCREEN_HALF and select_box_y == 0:
                     doodle_jump_game(screen, matrix, offset_canvas, started_on_pi)
+                # Dino
+                elif select_box_x == 0 and select_box_y == s.SCREEN_HALF:
+                    dino_game(screen, matrix, offset_canvas, started_on_pi)
                 # Exit
                 elif select_box_x == s.SCREEN_HALF and select_box_y == s.SCREEN_HALF:
                     run = False
