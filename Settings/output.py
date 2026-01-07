@@ -44,6 +44,17 @@ def draw_score(screen, number):
             if(score.SCORE[number_right][i][j]):
                 pygame.draw.rect(screen, fc.WHITE, (right_pos_x, pos_y, s.PIXEL_WIDTH, s.PIXEL_WIDTH))# Right Number
 
+def draw_score_tetris(screen, number):
+    score_str = str(number)  # z.B. "10"
+    for idx, digit_char in enumerate(score_str):
+        digit = int(digit_char)
+        for i in range(5):  # Zeilen des Ziffern-Arrays
+            for j in range(3):  # Spalten des Ziffern-Arrays
+                pos_x = s.SCORE_POSITION_X_TETRIS + j * s.PIXEL_WIDTH
+                pos_y = s.SCORE_POSITION_Y_TETRIS + idx * 6 * s.PIXEL_WIDTH + i * s.PIXEL_WIDTH
+                if score.SCORE[digit][i][j]:
+                    pygame.draw.rect(screen, fc.WHITE, (pos_x, pos_y, s.PIXEL_WIDTH, s.PIXEL_WIDTH))
+
 # does shading for 4px Blocks
 def draw_shaded_block(screen, rect, light, base, dark):
     bs = rect.width // 2

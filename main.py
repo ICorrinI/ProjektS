@@ -3,11 +3,9 @@ import pygame
 from pygame.locals import *
 import Settings.settings as s
 import Settings.colors as fc
-from Settings.icons import *
 from Settings.output import draw_matrix, draw_matrix_representation
-from Snake.snake import snake_game
-from DoodleJump.doodlejump import doodle_jump_game
-from Dino.dino import dino_game
+from gameregistry import GAMES
+
 
 started_on_pi = True
 try:
@@ -51,76 +49,98 @@ else:
 
 pygame.display.set_caption("Startscreen")
 
-select_box_x = 0
-select_box_y = 0
+# ---- MENU STATE ----
+ITEMS_PER_PAGE = 4
+current_page = 0
+selected_index = 0
+
+def get_page_items():
+    start = current_page * ITEMS_PER_PAGE
+    return GAMES[start:start + ITEMS_PER_PAGE]
+
+def max_page():
+    return (len(GAMES) - 1) // ITEMS_PER_PAGE
+
+def index_to_pos(index):
+    x = 0 if index % 2 == 0 else s.SCREEN_HALF
+    y = 0 if index < 2 else s.SCREEN_HALF
+    return x, y
 
 run = True
-while(run):
+clock = pygame.time.Clock()
+
+# ---- MAIN LOOP ----
+while run:
     for event in pygame.event.get():
-        if event.type == pygame.QUIT:
+        if event.type == QUIT:
             run = False
 
-        elif event.type == pygame.KEYDOWN:
+        elif event.type == KEYDOWN:
             if event.key == K_LEFT:
-                select_box_x = 0
-            elif event.key == K_RIGHT:
-                select_box_x = s.SCREEN_HALF
-            elif event.key == K_UP:
-                select_box_y = 0
-            elif event.key == K_DOWN:
-                select_box_y = s.SCREEN_HALF
-            elif event.key == K_RETURN:
-                # Snake
-                if select_box_x == 0 and select_box_y == 0:
-                    snake_game(screen, matrix, offset_canvas, started_on_pi)
-                # Doodle Jump
-                elif select_box_x == s.SCREEN_HALF and select_box_y == 0:
-                    doodle_jump_game(screen, matrix, offset_canvas, started_on_pi)
-                # Dino
-                elif select_box_x == 0 and select_box_y == s.SCREEN_HALF:
-                    dino_game(screen, matrix, offset_canvas, started_on_pi)
-                # Exit
-                elif select_box_x == s.SCREEN_HALF and select_box_y == s.SCREEN_HALF:
-                    run = False
+                if selected_index % 2 == 0:
+                    if current_page > 0:
+                        current_page -= 1
+                else:
+                    selected_index -= 1
 
+            elif event.key == K_RIGHT:
+                if selected_index % 2 == 1:
+                    if current_page < max_page():
+                        current_page += 1
+                else:
+                    selected_index += 1
+
+            elif event.key == K_UP and selected_index >= 2:
+                selected_index -= 2
+
+            elif event.key == K_DOWN and selected_index <= 1:
+                selected_index += 2
+
+            elif event.key == K_RETURN:
+                page_items = get_page_items()
+                if selected_index < len(page_items):
+                    game = page_items[selected_index]
+                    if not game["enabled"]:
+                        pass
+                    elif game["run"] == "EXIT":
+                        run = False
+                    else:
+                        game["run"](screen, matrix, offset_canvas, started_on_pi)
+
+        # For Joystick support send KEYDOWN events if joystick is used
         elif event.type == pygame.JOYAXISMOTION:
             if event.axis == 0:
                 if event.value < -0.5:
-                    select_box_x = 0
+                    pygame.event.post(pygame.event.Event(KEYDOWN, key=K_LEFT))
                 elif event.value > 0.5:
-                    select_box_x = s.SCREEN_HALF
+                    pygame.event.post(pygame.event.Event(KEYDOWN, key=K_RIGHT))
             elif event.axis == 1:
                 if event.value < -0.5:
-                    select_box_y = 0
+                    pygame.event.post(pygame.event.Event(KEYDOWN, key=K_UP))
                 elif event.value > 0.5:
-                    select_box_y = s.SCREEN_HALF
+                    pygame.event.post(pygame.event.Event(KEYDOWN, key=K_DOWN))
 
-        elif event.type == pygame.JOYBUTTONDOWN and event.button != 8:
-            if select_box_x == 0 and select_box_y == 0:
-                snake_game(screen, matrix, offset_canvas)
-            elif select_box_x == s.SCREEN_HALF and select_box_y == s.SCREEN_HALF:
-                run = False
+        elif event.type == JOYBUTTONDOWN and event.button != 8:
+            pygame.event.post(pygame.event.Event(KEYDOWN, key=K_RETURN))
 
-    # Top-left = snake
-    draw_icon_snake(screen, 0, 0)
+    screen.fill((0, 0, 0))
 
-    # Top-right = doodle jump
-    draw_icon_doodle_jump(screen, s.SCREEN_HALF, 0)
+    # ---- DRAW ICONS ----
+    for i, game in enumerate(get_page_items()):
+        x, y = index_to_pos(i)
+        game["icon"](screen, x, y)
 
-    # Bottom-left = X
-    draw_icon_x(screen, 0, s.SCREEN_HALF)
-
-    # Bottom-right = OFF
-    draw_icon_poweroff(screen, s.SCREEN_HALF, s.SCREEN_HALF)
-
-    # Selection
-    pygame.draw.rect(screen, fc.WHITE, (select_box_x, select_box_y, s.SCREEN_HALF, s.SCREEN_HALF), s.PIXEL_WIDTH)
+    # ---- SELECTION ----
+    sel_x, sel_y = index_to_pos(selected_index)
+    pygame.draw.rect(screen,fc.WHITE,(sel_x, sel_y, s.SCREEN_HALF, s.SCREEN_HALF),s.PIXEL_WIDTH,)
 
     if started_on_pi:
         draw_matrix(screen, matrix, offset_canvas)
     else:
         draw_matrix_representation(screen)
         pygame.display.update()
+
+    clock.tick(30)
 
 pygame.quit()
 if started_on_pi:
