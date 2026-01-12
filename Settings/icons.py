@@ -98,7 +98,33 @@ def draw_icon_dino(screen, x_offset, y_offset):
         1: fc.WHITE,
     }
 
+    
+
     draw_icon(screen, x_offset, y_offset,pixel_array=icon_array,color_mapping=icon_colors,pixel_size=s.PIXEL_WIDTH)
+
+def draw_game_dino(screen, x_offset, y_offset):
+    dino_array = np.array([
+        [0, 0, 0, 1, 0],
+        [0, 0, 1, 1, 1],
+        [1, 1, 1, 1, 0],
+        [0, 1, 1, 1, 0],
+        [0, 0, 1, 0, 0],
+    ])
+
+    dino_colors = {
+        0: fc.BLACK,
+        1: fc.WHITE
+    }
+
+    draw_icon(
+        screen,
+        x_offset,
+        y_offset,
+        pixel_array=dino_array,
+        color_mapping=dino_colors,
+        pixel_size=s.PIXEL_WIDTH
+    )
+
 
 def draw_icon_tetris(screen, x_offset, y_offset):
     icon_array = np.array([
