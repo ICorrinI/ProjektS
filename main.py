@@ -71,24 +71,25 @@ def start_evdev_keyboard():
 
     print(f"evdev keyboard: {keyboard.name}")
 
+    try:
+        keyboard.grab()
+        print("Keyboard grabbed successfully")
+    except OSError as e:
+        print(f"Failed to grab keyboard: {e}")
+        return
+
     def _reader():
         for event in keyboard.read_loop():
             if event.type == ecodes.EV_KEY:
                 key = categorize(event)
                 if key.keystate == key.key_down:
-                    if key.scancode in KEY_MAP:
+                    mapped = KEY_MAP.get(key.scancode)
+                    if mapped:
                         pygame.event.post(
-                            pygame.event.Event(
-                                pygame.KEYDOWN,
-                                key=KEY_MAP[key.scancode],
-                            )
+                            pygame.event.Event(pygame.KEYDOWN, key=mapped)
                         )
 
-    thread = threading.Thread(target=_reader, daemon=True)
-    thread.start()
-
-if started_on_pi:
-    start_evdev_keyboard()
+    threading.Thread(target=_reader, daemon=True).start()
 
 joysticks = [pygame.joystick.Joystick(i) for i in range(pygame.joystick.get_count())]
 for joystick in joysticks:
@@ -102,7 +103,8 @@ else:
 
 pygame.display.set_caption("Pixel Arcade")
 
-
+if started_on_pi:
+    start_evdev_keyboard()
 # -------------------------------------------------
 # RUN HOMESCREEN (BLOCKING)
 # -------------------------------------------------
