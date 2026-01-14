@@ -6,6 +6,7 @@ GREEN = (115, 191, 44)
 RED = (230, 30, 30)
 BROWN = (160, 120, 60)
 YELLOW = (180, 180, 0)
+DARK_GRAY = (60, 60, 60)
 
 # Snake
 SNAKE_LIGHT = (170, 255, 120)

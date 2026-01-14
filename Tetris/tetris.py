@@ -12,25 +12,27 @@ from Settings.output import (
 )
 from . import turnblock as tb
 
-# --- Tetromino Definitions (Rotation = 0 only, Prototype) ---
+
+# --- Tetromino Definitions ---
 TETROMINOS = {
     "I": ([[1, 1, 1, 1]], fc.TETRIS_I_LIGHT, fc.TETRIS_I_BASE, fc.TETRIS_I_DARK),
-    "T": ([[0,1,0],[1,1,1]], fc.TETRIS_T_LIGHT, fc.TETRIS_T_BASE, fc.TETRIS_T_DARK),
-    "L": ([[1,0],[1,0],[1,1]], fc.TETRIS_L_LIGHT, fc.TETRIS_L_BASE, fc.TETRIS_L_DARK),
-    "J": ([[0,1],[0,1],[1,1]], fc.TETRIS_J_LIGHT, fc.TETRIS_J_BASE, fc.TETRIS_J_DARK),
-    "S": ([[0,1,1],[1,1,0]], fc.TETRIS_S_LIGHT, fc.TETRIS_S_BASE, fc.TETRIS_S_DARK),
-    "Z": ([[1,1,0],[0,1,1]], fc.TETRIS_Z_LIGHT, fc.TETRIS_Z_BASE, fc.TETRIS_Z_DARK),
-    "O": ([[1,1],[1,1]], fc.TETRIS_O_LIGHT, fc.TETRIS_O_BASE, fc.TETRIS_O_DARK),
+    "T": ([[0, 1, 0], [1, 1, 1]], fc.TETRIS_T_LIGHT, fc.TETRIS_T_BASE, fc.TETRIS_T_DARK),
+    "L": ([[1, 0], [1, 0], [1, 1]], fc.TETRIS_L_LIGHT, fc.TETRIS_L_BASE, fc.TETRIS_L_DARK),
+    "J": ([[0, 1], [0, 1], [1, 1]], fc.TETRIS_J_LIGHT, fc.TETRIS_J_BASE, fc.TETRIS_J_DARK),
+    "S": ([[0, 1, 1], [1, 1, 0]], fc.TETRIS_S_LIGHT, fc.TETRIS_S_BASE, fc.TETRIS_S_DARK),
+    "Z": ([[1, 1, 0], [0, 1, 1]], fc.TETRIS_Z_LIGHT, fc.TETRIS_Z_BASE, fc.TETRIS_Z_DARK),
+    "O": ([[1, 1], [1, 1]], fc.TETRIS_O_LIGHT, fc.TETRIS_O_BASE, fc.TETRIS_O_DARK),
 }
 
-def tetris_game(screen, matrix, offset_canvas, started_on_pi):
-    held_piece = None
-    can_hold = True  # verhindert mehrfaches Holden pro Drop
 
+def tetris_game(screen, matrix, offset_canvas, started_on_pi):
     clock = pygame.time.Clock()
 
     board = [[None for _ in range(s.TETRIS_COLS)] for _ in range(s.TETRIS_ROWS)]
     score = 0
+
+    held_piece = None
+    can_hold = True
 
     def new_piece():
         key = random.choice(list(TETROMINOS.keys()))
@@ -45,21 +47,22 @@ def tetris_game(screen, matrix, offset_canvas, started_on_pi):
         }
 
     piece = new_piece()
-    next_pieces = [new_piece() for _ in range(3)]  # Queue der nächsten 3 Pieces
+    next_pieces = [new_piece() for _ in range(3)]
 
     def draw_next_pieces():
         for i, p in enumerate(next_pieces):
             shape = p["shape"]
-            shape_height = len(shape)
-            # vertikales Zentrieren innerhalb des Slots
-            top_offset = (s.TETRIS_NEXT_SLOT_HEIGHT - shape_height) // 2
+            h = len(shape)
+            offset_y = (s.TETRIS_NEXT_SLOT_HEIGHT - h) // 2
 
             for y, row in enumerate(shape):
                 for x, cell in enumerate(row):
                     if cell:
                         rect = pygame.Rect(
                             s.TETRIS_NEXT_OFFSET_X + x * s.TETRIS_NEXT_SIZE,
-                            int((s.TETRIS_NEXT_OFFSET_Y + i * (s.TETRIS_NEXT_SLOT_HEIGHT * s.TETRIS_NEXT_SIZE + s.TETRIS_NEXT_SPACING) + (y + top_offset) * s.TETRIS_NEXT_SIZE)/20) * 20,
+                            s.TETRIS_NEXT_OFFSET_Y
+                            + i * (s.TETRIS_NEXT_SLOT_HEIGHT * s.TETRIS_NEXT_SIZE + s.TETRIS_NEXT_SPACING)
+                            + (y + offset_y) * s.TETRIS_NEXT_SIZE,
                             s.TETRIS_NEXT_SIZE,
                             s.TETRIS_NEXT_SIZE
                         )
@@ -67,35 +70,40 @@ def tetris_game(screen, matrix, offset_canvas, started_on_pi):
 
     def draw_hold_piece():
         nonlocal held_piece
+
+        PREVIEW_SIZE = s.TETRIS_NEXT_SIZE
+        SLOT_SIZE = 4 * PREVIEW_SIZE
+
         slot_rect = pygame.Rect(
             s.TETRIS_HOLD_OFFSET_X,
             s.TETRIS_HOLD_OFFSET_Y,
-            4 * s.TETRIS_NEXT_SIZE,
-            4 * s.TETRIS_NEXT_SIZE
+            SLOT_SIZE,
+            SLOT_SIZE
         )
-        pygame.draw.rect(screen, fc.TETRIS_HOLD, slot_rect, 2)
+
+        pygame.draw.rect(screen, fc.UI_BG, slot_rect)
+        pygame.draw.rect(screen, fc.TETRIS_HOLD, slot_rect, 0)
 
         if held_piece is None:
             return
 
         shape = held_piece["shape"]
-        shape_height = len(shape)
-        shape_width = len(shape[0])
+        h = len(shape)
+        w = len(shape[0])
 
-        offset_x = (4 - shape_width) // 2
-        offset_y = (4 - shape_height) // 2
+        offset_x = (4 - w) // 2
+        offset_y = (4 - h) // 2
 
         for y, row in enumerate(shape):
             for x, cell in enumerate(row):
                 if cell:
                     rect = pygame.Rect(
-                        s.TETRIS_HOLD_OFFSET_X + (x + offset_x) * s.TETRIS_NEXT_SIZE,
-                        s.TETRIS_HOLD_OFFSET_Y + (y + offset_y) * s.TETRIS_NEXT_SIZE,
-                        s.TETRIS_NEXT_SIZE,
-                        s.TETRIS_NEXT_SIZE
+                        s.TETRIS_HOLD_OFFSET_X + (x + offset_x) * PREVIEW_SIZE,
+                        s.TETRIS_HOLD_OFFSET_Y + (y + offset_y) * PREVIEW_SIZE,
+                        PREVIEW_SIZE,
+                        PREVIEW_SIZE
                     )
                     pygame.draw.rect(screen, held_piece["colors"][1], rect)
-
 
     def can_move(px, py, shape):
         for y, row in enumerate(shape):
@@ -116,9 +124,10 @@ def tetris_game(screen, matrix, offset_canvas, started_on_pi):
             for x, cell in enumerate(row):
                 if cell:
                     board[piece["y"] + y][piece["x"] + x] = piece["colors"]
-        piece = next_pieces.pop(0)  # Nächstes Piece aus Queue
+
+        piece = next_pieces.pop(0)
+        next_pieces.append(new_piece())
         can_hold = True
-        next_pieces.append(new_piece())  # Neues zufälliges Piece hinten anhängen
 
     def clear_lines():
         nonlocal score
@@ -136,6 +145,7 @@ def tetris_game(screen, matrix, offset_canvas, started_on_pi):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return
+
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_s:
                     return
@@ -152,25 +162,20 @@ def tetris_game(screen, matrix, offset_canvas, started_on_pi):
                         lock_piece()
                         board[:] = clear_lines()
                 if event.key == pygame.K_SPACE:
-                    # Move piece all the way down
                     while can_move(piece["x"], piece["y"] + 1, piece["shape"]):
                         piece["y"] += 1
                     lock_piece()
                     board[:] = clear_lines()
                 if event.key == pygame.K_c and can_hold:
                     can_hold = False
-
                     if held_piece is None:
                         held_piece = piece
                         piece = next_pieces.pop(0)
                         next_pieces.append(new_piece())
                     else:
                         held_piece, piece = piece, held_piece
-
-                    # Reset Position des neuen aktiven Pieces
                     piece["x"] = s.TETRIS_COLS // 2 - len(piece["shape"][0]) // 2
                     piece["y"] = 0
-
 
         fall_timer += 1
         if fall_timer >= s.TETRIS_FALL_SPEED:
@@ -180,55 +185,9 @@ def tetris_game(screen, matrix, offset_canvas, started_on_pi):
             else:
                 lock_piece()
                 board[:] = clear_lines()
-                # --- Game Over Check ---
-                if not can_move(piece["x"], piece["y"], piece["shape"]):
-                    game_over = True
-                    while game_over:
-                        screen.fill(fc.UI_BG)
-                        field_rect = pygame.Rect(
-                            s.TETRIS_OFFSET_X,
-                            s.TETRIS_OFFSET_Y,
-                            s.TETRIS_COLS * s.TETRIS_CELL,
-                            s.TETRIS_ROWS * s.TETRIS_CELL
-                        )
-                        pygame.draw.rect(screen, fc.TETRIS_BG, field_rect)
 
-                        # Draw locked board
-                        for y in range(s.TETRIS_ROWS):
-                            for x in range(s.TETRIS_COLS):
-                                if board[y][x]:
-                                    rect = pygame.Rect(
-                                        s.TETRIS_OFFSET_X + x * s.TETRIS_CELL,
-                                        s.TETRIS_OFFSET_Y + y * s.TETRIS_CELL,
-                                        s.TETRIS_CELL,
-                                        s.TETRIS_CELL
-                                    )
-                                    draw_shaded_block(screen, rect, *board[y][x])
-
-                        # Draw final score
-                        draw_score(screen, score)
-
-                        if started_on_pi:
-                            offset_canvas = draw_matrix(screen, matrix, offset_canvas)
-                        else:
-                            draw_matrix_representation(screen)
-                            pygame.display.update()
-
-                        # Warten auf Input zum Neustart
-                        for event in pygame.event.get():
-                            if event.type == pygame.KEYDOWN:
-                                piece = new_piece()
-                                next_pieces = [new_piece() for _ in range(3)]
-                                board[:] = [[None for _ in range(s.TETRIS_COLS)] for _ in range(s.TETRIS_ROWS)]
-                                score = 0
-                                game_over = False
-                            elif event.type == pygame.QUIT:
-                                return
-
-                        clock.tick(s.TETRIS_FALL_SPEED)
-
-        # --- Draw Board & Piece ---
         screen.fill(fc.UI_BG)
+
         field_rect = pygame.Rect(
             s.TETRIS_OFFSET_X,
             s.TETRIS_OFFSET_Y,
@@ -261,7 +220,7 @@ def tetris_game(screen, matrix, offset_canvas, started_on_pi):
 
         draw_score_tetris(screen, score)
         draw_hold_piece()
-        draw_next_pieces()  # ← Anzeige der nächsten 3 Pieces
+        draw_next_pieces()
 
         if started_on_pi:
             offset_canvas = draw_matrix(screen, matrix, offset_canvas)
