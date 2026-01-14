@@ -39,11 +39,12 @@ if started_on_pi:
     offset_canvas = matrix.CreateFrameCanvas()
 
     KEY_MAP = {
-    ecodes.KEY_LEFT: pygame.K_LEFT,
-    ecodes.KEY_RIGHT: pygame.K_RIGHT,
-    ecodes.KEY_UP: pygame.K_UP,
-    ecodes.KEY_DOWN: pygame.K_DOWN,
-    ecodes.KEY_ENTER: pygame.K_RETURN,
+        ecodes.KEY_LEFT: pygame.K_LEFT,
+        ecodes.KEY_RIGHT: pygame.K_RIGHT,
+        ecodes.KEY_UP: pygame.K_UP,
+        ecodes.KEY_DOWN: pygame.K_DOWN,
+        ecodes.KEY_ENTER: pygame.K_RETURN,
+        ecodes.KEY_KPENTER: pygame.K_RETURN,
     }
 
 # -------------------------------------------------
@@ -80,14 +81,12 @@ def start_evdev_keyboard():
 
     def _reader():
         for event in keyboard.read_loop():
-            if event.type == ecodes.EV_KEY:
-                key = categorize(event)
-                if key.keystate == key.key_down:
-                    mapped = KEY_MAP.get(key.scancode)
-                    if mapped:
-                        pygame.event.post(
-                            pygame.event.Event(pygame.KEYDOWN, key=mapped)
-                        )
+            if event.type == ecodes.EV_KEY and event.value == 1:
+                mapped = KEY_MAP.get(event.code)
+                if mapped:
+                    pygame.event.post(
+                        pygame.event.Event(pygame.KEYDOWN, key=mapped)
+                    )
 
     threading.Thread(target=_reader, daemon=True).start()
 
