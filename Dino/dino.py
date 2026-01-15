@@ -1,43 +1,29 @@
-import pygame, random
-from Settings.output import (
-    draw_matrix,
-    draw_matrix_representation,
-    draw_score,
-    draw_tiled_block
-)
+import pygame
+import random
+from Settings.output import draw_matrix, draw_matrix_representation, draw_score, draw_tiled_block
 import Settings.settings as s
 import Settings.colors as fc
 from Settings.icons import draw_game_dino
+from Settings import inputs
 
 
-def dino_game(screen, matrix, offset_canvas, started_on_pi):
+def dino_game(screen, matrix, offset_canvas, started_on_pi, input_handler: inputs.InputHandler):
     clock = pygame.time.Clock()
 
     def draw_cactus_branch(screen, trunk_x, trunk_width, y, side):
-        length = 2 * s.PIXEL_WIDTH   
-        thickness = s.PIXEL_WIDTH   
+        length = 2 * s.PIXEL_WIDTH
+        thickness = s.PIXEL_WIDTH
         yup = y - s.PIXEL_WIDTH
 
         if side == "left":
             bx = trunk_x - length
-            bupx = bx 
-
+            bupx = bx
         else:
             bx = trunk_x + trunk_width
             bupx = bx + s.PIXEL_WIDTH
 
-        branch_rect = pygame.Rect(
-            bx,
-            y,
-            length,        
-            thickness      
-        )   
-        branch_up_rect = pygame.Rect(
-            bupx,
-            yup,
-            thickness,       
-            thickness      
-        )
+        branch_rect = pygame.Rect(bx, y, length, thickness)
+        branch_up_rect = pygame.Rect(bupx, yup, thickness, thickness)
         pygame.draw.rect(screen, fc.DINO_BASE, branch_rect)
         pygame.draw.rect(screen, fc.DINO_DARK, branch_up_rect)
 
@@ -69,11 +55,7 @@ def dino_game(screen, matrix, offset_canvas, started_on_pi):
                 self.on_ground = True
 
         def draw(self):
-            draw_game_dino(
-                screen,
-                int(self.x),
-                int(self.y)
-            )
+            draw_game_dino(screen, int(self.x), int(self.y))
 
     # ---------------- CACTUS ----------------
     class Cactus:
@@ -98,7 +80,6 @@ def dino_game(screen, matrix, offset_canvas, started_on_pi):
             self.x -= speed
 
         def draw(self):
-            # Stamm
             for i in range(self.segments):
                 seg_rect = pygame.Rect(
                     self.x,
@@ -106,143 +87,114 @@ def dino_game(screen, matrix, offset_canvas, started_on_pi):
                     self.w,
                     s.BLOCK_SIZE
                 )
-                draw_tiled_block(
-                    screen,
-                    seg_rect,
-                    0,
-                    fc.DINO_LIGHT,
-                    fc.DINO_BASE,
-                    fc.DINO_DARK
-                )
-            # Ast
+                draw_tiled_block(screen, seg_rect, 0, fc.DINO_LIGHT, fc.DINO_BASE, fc.DINO_DARK)
             if self.branch_side is not None:
                 branch_y = self.y + (self.segments - 1 - self.branch_height) * s.BLOCK_SIZE
+                draw_cactus_branch(screen, self.x, self.w, branch_y, self.branch_side)
 
-                draw_cactus_branch(
-                    screen,
-                    self.x,
-                    self.w,
-                    branch_y,
-                    self.branch_side
-                )
         def get_branch_rects(self):
             rects = []
-
             if self.branch_side is None:
                 return rects
-
             length = 2 * s.PIXEL_WIDTH
             thickness = s.PIXEL_WIDTH
-
             y = self.y + (self.segments - 1 - self.branch_height) * s.BLOCK_SIZE
             yup = y - s.PIXEL_WIDTH
-
             if self.branch_side == "left":
                 bx = self.x - length
                 bupx = bx
             else:
                 bx = self.x + self.w
                 bupx = bx + s.PIXEL_WIDTH
-
-            rects.append(
-                pygame.Rect(bx, y, length, thickness)
-            )
-
-            rects.append(
-                pygame.Rect(bupx, yup, thickness, thickness)
-            )
-
+            rects.append(pygame.Rect(bx, y, length, thickness))
+            rects.append(pygame.Rect(bupx, yup, thickness, thickness))
             return rects
-
-    
-
 
     # ---------------- RESET ----------------
     def reset():
         return Dino(), [], 0, False, s.GAME_SPEED / 2
 
+    # --------- MAIN LOOP ----------
     while True:
         dino, obstacles, score, game_over, game_speed = reset()
         MAX_CACTI = 3
 
         while len(obstacles) < MAX_CACTI:
-            if not obstacles:
-                obstacles.append(Cactus())
-            else:
-                last = obstacles[-1]
-                dist = random.randint(s.CACTUS_MIN_DISTANCE, s.CACTUS_MAX_DISTANCE)
-                c = Cactus()
+            last = obstacles[-1] if obstacles else None
+            dist = random.randint(s.CACTUS_MIN_DISTANCE, s.CACTUS_MAX_DISTANCE)
+            c = Cactus()
+            if last:
                 c.x = last.x + last.w + dist
-                obstacles.append(c)
+            obstacles.append(c)
 
         run = True
         while run:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    return
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_s:
-                        return
-                    if event.key in (pygame.K_SPACE, pygame.K_UP):
-                        dino.jump()
-                    if game_over:
-                        run = False
+            # InputHandler Events
+            events = pygame.event.get()
+            input_handler.process_events(events)
 
+            # exit/back
+            if input_handler.is_pressed(inputs.BACK):
+                return
+
+            # jump
+            if not game_over and (input_handler.is_pressed(inputs.CONFIRM) or input_handler.is_pressed(inputs.UP)):
+                dino.jump()
+
+            # update player & obstacles
             if not game_over:
                 dino.update()
-
                 for obs in obstacles:
                     obs.update(game_speed)
-
-                    # Stamm-Kollision
                     if obs.rect().colliderect(dino.rect()):
                         game_over = True
-
-                    # Ast-Kollision
                     for branch_rect in obs.get_branch_rects():
                         if branch_rect.colliderect(dino.rect()):
                             game_over = True
-
-                    # SCORE + SPEED
                     if not obs.passed and obs.x + obs.w < dino.x:
                         obs.passed = True
                         score += 1
-
                         if score % 5 == 0:
-                            game_speed += s.PIXEL_WIDTH / 4 
-
+                            game_speed += s.PIXEL_WIDTH / 4
                         last = obstacles[-1]
                         dist = random.randint(s.CACTUS_MIN_DISTANCE, s.CACTUS_MAX_DISTANCE)
-                        c = Cactus()
-                        c.x = last.x + last.w + dist
-                        obstacles.append(c)
-
+                        new_c = Cactus()
+                        new_c.x = last.x + last.w + dist
+                        obstacles.append(new_c)
                 obstacles = [o for o in obstacles if o.x + o.w > 0]
 
+            # ---------------- RENDER ----------------
             screen.fill(fc.BLACK)
-
-            ground_rect = pygame.Rect(
-                0,
-                s.SCREEN_HEIGHT - s.GROUND_HEIGHT,
-                s.SCREEN_WIDTH,
-                s.GROUND_HEIGHT
-            )
-            draw_tiled_block(
-                screen,
-                ground_rect,
-                0,
-                fc.DINO_LIGHT,
-                fc.DINO_BASE,
-                fc.DINO_DARK
-            )
+            ground_rect = pygame.Rect(0, s.SCREEN_HEIGHT - s.GROUND_HEIGHT, s.SCREEN_WIDTH, s.GROUND_HEIGHT)
+            draw_tiled_block(screen, ground_rect, 0, fc.DINO_LIGHT, fc.DINO_BASE, fc.DINO_DARK)
 
             dino.draw()
             for obs in obstacles:
                 obs.draw()
 
             if game_over:
+                # Game Over Score anzeigen **dauerhaft**
                 draw_score(screen, score)
+                if started_on_pi:
+                    offset_canvas = draw_matrix(screen, matrix, offset_canvas)
+                else:
+                    draw_matrix_representation(screen)
+                    pygame.display.update()
 
+                # Warten auf Restart oder Exit
+                waiting = True
+                while waiting:
+                    events = pygame.event.get()
+                    input_handler.process_events(events)
+                    if input_handler.is_pressed(inputs.CONFIRM):
+                        waiting = False
+                        run = False  # restart main loop
+                    elif input_handler.is_pressed(inputs.BACK):
+                        return
+                    clock.tick(s.DINO_FPS)
+                continue  # weiter zur nächsten Schleife, aber nach Game Over
+
+            # normales Update Display
             if started_on_pi:
                 offset_canvas = draw_matrix(screen, matrix, offset_canvas)
             else:

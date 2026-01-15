@@ -11,7 +11,7 @@ from Settings.output import (
     draw_score
 )
 from . import turnblock as tb
-
+from Settings import inputs
 
 # --- Tetromino Definitions ---
 TETROMINOS = {
@@ -25,7 +25,7 @@ TETROMINOS = {
 }
 
 
-def tetris_game(screen, matrix, offset_canvas, started_on_pi):
+def tetris_game(screen, matrix, offset_canvas, started_on_pi, input_handler: inputs.InputHandler):
     clock = pygame.time.Clock()
 
     board = [[None for _ in range(s.TETRIS_COLS)] for _ in range(s.TETRIS_ROWS)]
@@ -54,7 +54,6 @@ def tetris_game(screen, matrix, offset_canvas, started_on_pi):
             shape = p["shape"]
             h = len(shape)
             offset_y = (s.TETRIS_NEXT_SLOT_HEIGHT - h) // 2
-
             for y, row in enumerate(shape):
                 for x, cell in enumerate(row):
                     if cell:
@@ -70,7 +69,6 @@ def tetris_game(screen, matrix, offset_canvas, started_on_pi):
 
     def draw_hold_piece():
         nonlocal held_piece
-
         PREVIEW_SIZE = s.TETRIS_NEXT_SIZE
         SLOT_SIZE = 4 * PREVIEW_SIZE
 
@@ -90,7 +88,6 @@ def tetris_game(screen, matrix, offset_canvas, started_on_pi):
         shape = held_piece["shape"]
         h = len(shape)
         w = len(shape[0])
-
         offset_x = (4 - w) // 2
         offset_y = (4 - h) // 2
 
@@ -124,7 +121,6 @@ def tetris_game(screen, matrix, offset_canvas, started_on_pi):
             for x, cell in enumerate(row):
                 if cell:
                     board[piece["y"] + y][piece["x"] + x] = piece["colors"]
-
         piece = next_pieces.pop(0)
         next_pieces.append(new_piece())
         can_hold = True
@@ -142,41 +138,46 @@ def tetris_game(screen, matrix, offset_canvas, started_on_pi):
     run = True
 
     while run:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                return
+        events = pygame.event.get()
+        input_handler.process_events(events)
 
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_s:
-                    return
-                if event.key == pygame.K_UP:
-                    piece = tb.try_rotate(piece, board, clockwise=True)
-                if event.key == pygame.K_LEFT and can_move(piece["x"] - 1, piece["y"], piece["shape"]):
-                    piece["x"] -= 1
-                if event.key == pygame.K_RIGHT and can_move(piece["x"] + 1, piece["y"], piece["shape"]):
-                    piece["x"] += 1
-                if event.key == pygame.K_DOWN:
-                    if can_move(piece["x"], piece["y"] + 1, piece["shape"]):
-                        piece["y"] += 1
-                    else:
-                        lock_piece()
-                        board[:] = clear_lines()
-                if event.key == pygame.K_SPACE:
-                    while can_move(piece["x"], piece["y"] + 1, piece["shape"]):
-                        piece["y"] += 1
-                    lock_piece()
-                    board[:] = clear_lines()
-                if event.key == pygame.K_c and can_hold:
-                    can_hold = False
-                    if held_piece is None:
-                        held_piece = piece
-                        piece = next_pieces.pop(0)
-                        next_pieces.append(new_piece())
-                    else:
-                        held_piece, piece = piece, held_piece
-                    piece["x"] = s.TETRIS_COLS // 2 - len(piece["shape"][0]) // 2
-                    piece["y"] = 0
+        if input_handler.is_pressed(inputs.BACK):
+            return
 
+        if input_handler.is_pressed(inputs.UP):
+            piece = tb.try_rotate(piece, board, clockwise=True)
+
+        if input_handler.is_pressed(inputs.LEFT) and can_move(piece["x"] - 1, piece["y"], piece["shape"]):
+            piece["x"] -= 1
+
+        if input_handler.is_pressed(inputs.RIGHT) and can_move(piece["x"] + 1, piece["y"], piece["shape"]):
+            piece["x"] += 1
+
+        if input_handler.is_pressed(inputs.DOWN):
+            if can_move(piece["x"], piece["y"] + 1, piece["shape"]):
+                piece["y"] += 1
+            else:
+                lock_piece()
+                board[:] = clear_lines()
+
+        if input_handler.is_pressed(inputs.DROP):
+            while can_move(piece["x"], piece["y"] + 1, piece["shape"]):
+                piece["y"] += 1
+            lock_piece()
+            board[:] = clear_lines()
+
+        if input_handler.is_pressed(inputs.HOLD) and can_hold:
+            can_hold = False
+            if held_piece is None:
+                held_piece = piece
+                piece = next_pieces.pop(0)
+                next_pieces.append(new_piece())
+            else:
+                held_piece, piece = piece, held_piece
+            piece["x"] = s.TETRIS_COLS // 2 - len(piece["shape"][0]) // 2
+            piece["y"] = 0
+
+        # Fall-Timer
         fall_timer += 1
         if fall_timer >= s.TETRIS_FALL_SPEED:
             fall_timer = 0
@@ -186,8 +187,8 @@ def tetris_game(screen, matrix, offset_canvas, started_on_pi):
                 lock_piece()
                 board[:] = clear_lines()
 
+        # Render
         screen.fill(fc.UI_BG)
-
         field_rect = pygame.Rect(
             s.TETRIS_OFFSET_X,
             s.TETRIS_OFFSET_Y,

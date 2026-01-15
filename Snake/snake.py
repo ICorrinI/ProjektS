@@ -1,11 +1,13 @@
 import pygame
-from pygame.locals import *
 import random
+
 from Settings.output import draw_matrix_representation, draw_matrix, draw_score, draw_shaded_block
 from Settings.colors import *
 from Settings.settings import SNAKE_SPEED, SCREEN_WIDTH, SCREEN_HEIGHT, BLOCK_SIZE
+from Settings import inputs
 
-def snake_game(screen, matrix, offset_canvas, started_on_pi):
+
+def snake_game(screen, matrix, offset_canvas, started_on_pi, input_handler: inputs.InputHandler):
     clock = pygame.time.Clock()
 
     class Snake:
@@ -22,8 +24,6 @@ def snake_game(screen, matrix, offset_canvas, started_on_pi):
             self.dead = False
 
         def update(self):
-            global apple
-
             # Shift body
             self.body.append(self.head.copy())
             for i in range(len(self.body) - 1):
@@ -58,7 +58,6 @@ def snake_game(screen, matrix, offset_canvas, started_on_pi):
                 self.x = random.randint(0, (SCREEN_WIDTH // BLOCK_SIZE) - 1) * BLOCK_SIZE
                 self.y = random.randint(0, (SCREEN_HEIGHT // BLOCK_SIZE) - 1) * BLOCK_SIZE
 
-                # Check collision with snake
                 valid = True
                 if self.x == snake.head.x and self.y == snake.head.y:
                     valid = False
@@ -73,52 +72,49 @@ def snake_game(screen, matrix, offset_canvas, started_on_pi):
 
     snake = Snake()
     apple = Apple()
-
     score_value = 0
-    event_thrown = False
+
     run = True
-
     while run:
+        # -----------------------------
+        # INPUT HANDLING
+        # -----------------------------
+        events = pygame.event.get()
+        input_handler.process_events(events)
 
-        # INPUT -----------------------------
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                return
+        # Exit / back
+        if input_handler.is_pressed(inputs.BACK):
+            return
 
-            if event.type == pygame.KEYDOWN and not event_thrown:
-                if event.key == pygame.K_LEFT and snake.xdir != 1:
-                    snake.xdir = -1
-                    snake.ydir = 0
-                    event_thrown = True
-                elif event.key == pygame.K_RIGHT and snake.xdir != -1:
-                    snake.xdir = 1
-                    snake.ydir = 0
-                    event_thrown = True
-                elif event.key == pygame.K_UP and snake.ydir != 1:
-                    snake.xdir = 0
-                    snake.ydir = -1
-                    event_thrown = True
-                elif event.key == pygame.K_DOWN and snake.ydir != -1:
-                    snake.xdir = 0
-                    snake.ydir = 1
-                    event_thrown = True
-                elif event.key == pygame.K_s:
-                    return
+        # Direction control (prevent reverse)
+        if input_handler.is_pressed(inputs.LEFT) and snake.xdir != 1:
+            snake.xdir = -1
+            snake.ydir = 0
+        elif input_handler.is_pressed(inputs.RIGHT) and snake.xdir != -1:
+            snake.xdir = 1
+            snake.ydir = 0
+        elif input_handler.is_pressed(inputs.UP) and snake.ydir != 1:
+            snake.xdir = 0
+            snake.ydir = -1
+        elif input_handler.is_pressed(inputs.DOWN) and snake.ydir != -1:
+            snake.xdir = 0
+            snake.ydir = 1
 
-        event_thrown = False
-
-        # UPDATE -----------------------------
+        # -----------------------------
+        # UPDATE GAME LOGIC
+        # -----------------------------
         snake.update()
 
-        # Check apple
+        # Check apple collision
         if snake.head.x == apple.x and snake.head.y == apple.y:
             snake.body.append(pygame.Rect(apple.x, apple.y, BLOCK_SIZE, BLOCK_SIZE))
             apple.respawn()
             score_value += 1
 
-        # DRAW -------------------------------
+        # -----------------------------
+        # RENDER
+        # -----------------------------
         screen.fill("black")
-
         apple.draw()
         draw_shaded_block(screen, snake.head, SNAKE_LIGHT, SNAKE_BASE, SNAKE_DARK)
         for sq in snake.body:
@@ -135,15 +131,17 @@ def snake_game(screen, matrix, offset_canvas, started_on_pi):
 
             wait_for_restart = True
             while wait_for_restart:
-                for event in pygame.event.get():
-                    if event.type == pygame.KEYDOWN:
-                        # Reset game
-                        snake.reset()
-                        apple.respawn()
-                        score_value = 0
-                        wait_for_restart = False
-                    elif event.type == pygame.QUIT:
-                        return
+                events = pygame.event.get()
+                input_handler.process_events(events)
+
+                if input_handler.is_pressed(inputs.CONFIRM):
+                    # Reset game
+                    snake.reset()
+                    apple.respawn()
+                    score_value = 0
+                    wait_for_restart = False
+                elif input_handler.is_pressed(inputs.BACK):
+                    return
 
                 clock.tick(SNAKE_SPEED)
             continue

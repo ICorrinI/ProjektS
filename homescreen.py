@@ -2,35 +2,35 @@ import pygame
 import Settings.colors as fc
 import Settings.settings as s
 from Settings.icons import draw_icon_poweroff
+from Settings import inputs
 
 STATE_START = "START"
 STATE_EXIT = "EXIT"
 
-def run_homescreen(screen, matrix, offset_canvas, started_on_pi):
+def run_homescreen(screen, matrix, offset_canvas, started_on_pi, input_handler: inputs.InputHandler):
     clock = pygame.time.Clock()
-    selected = STATE_START
-
     run = True
+
     while run:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                return STATE_EXIT
+        events = pygame.event.get()
+        input_handler.process_events(events)
 
-            if event.type == pygame.KEYDOWN:
-                if event.key in (pygame.K_LEFT, pygame.K_RIGHT):
-                    selected = STATE_EXIT if selected == STATE_START else STATE_START
+        # BACK = Exit
+        if input_handler.is_pressed(inputs.BACK):
+            return STATE_EXIT
 
-                elif event.key == pygame.K_RETURN:
-                    return selected
-        # ---- DRAW ----
+        # Wenn **irgendeine andere Taste gedrückt** → Startseite
+        for action in [inputs.UP, inputs.DOWN, inputs.LEFT, inputs.RIGHT, inputs.CONFIRM, inputs.DROP, inputs.HOLD]:
+            if input_handler.is_pressed(action):
+                return STATE_START
+
+        # DRAW
         screen.fill(fc.BLACK)
-        
-        # POWER ICON
         draw_icon_poweroff(screen, 0, 0)
 
         if started_on_pi:
             from Settings.output import draw_matrix
-            draw_matrix(screen, matrix, offset_canvas)
+            offset_canvas = draw_matrix(screen, matrix, offset_canvas)
         else:
             from Settings.output import draw_matrix_representation
             draw_matrix_representation(screen)
