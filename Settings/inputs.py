@@ -2,6 +2,7 @@ import pygame
 import threading
 import os
 import select
+import time
 
 # Für Pi evdev
 try:
@@ -26,6 +27,8 @@ class InputHandler:
         self.pressed = set()          # Pygame + Joystick Tasten
         self.evdev_pressed = set()    # Pi evdev Tasten
         self.pressed_lock = threading.Lock()  # Thread-Safety für evdev
+        self.evdev_last_time = {}
+        self.evdev_delay = 0.01  # 10 ms
 
         # Key Mapping für Pygame
         self.key_map = {
@@ -105,14 +108,28 @@ class InputHandler:
 
         def _reader():
             for event in keyboard.read_loop():
-                if event.type == ecodes.EV_KEY:
-                    mapped = self.evdev_map.get(event.code)
-                    if mapped:
-                        with self.pressed_lock:
-                            if event.value == 1:
-                                self.evdev_pressed.add(mapped)
-                            elif event.value == 0:
-                                self.evdev_pressed.discard(mapped)
+                if event.type != ecodes.EV_KEY:
+                    continue
+
+                mapped = self.evdev_map.get(event.code)
+                if not mapped:
+                    continue
+
+                now = time.time()
+
+                with self.pressed_lock:
+                    last = self.evdev_last_time.get(mapped, 0)
+
+                    # KEYDOWN + KEY_REPEAT
+                    if event.value in (1, 2):
+                        if now - last >= self.evdev_delay:
+                            self.evdev_pressed.add(mapped)
+                            self.evdev_last_time[mapped] = now
+
+                    # KEYUP
+                    elif event.value == 0:
+                        self.evdev_pressed.discard(mapped)
+                        self.evdev_last_time.pop(mapped, None)
 
         threading.Thread(target=_reader, daemon=True).start()
 
