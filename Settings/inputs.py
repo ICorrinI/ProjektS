@@ -94,11 +94,11 @@ class InputHandler:
         if not keyboard:
             return
 
-        try:
-            keyboard.grab()
-        except OSError as e:
-            print(f"Failed to grab keyboard: {e}")
-            return
+        # try:
+        #     keyboard.grab()
+        # except OSError as e:
+        #     print(f"Failed to grab keyboard: {e}")
+        #     return
 
         def _reader():
             for event in keyboard.read_loop():

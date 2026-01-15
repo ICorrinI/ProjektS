@@ -15,10 +15,10 @@ def find_first_active_keyboard():
             print(f"Gefundenes Keyboard-Candidate: {dev.name} ({dev.path})")
 
     if not candidates:
-        print("⚠️ Keine Tastaturen gefunden")
+        print("Keine Tastaturen gefunden")
         return None
 
-    print("\n💡 Bitte eine Taste auf einer Tastatur drücken, um die aktive zu wählen...")
+    print("\nBitte eine Taste auf einer Tastatur drücken, um die aktive zu wählen...")
 
     while True:
         r, _, _ = select.select([dev.fd for dev in candidates], [], [], 0.1)
