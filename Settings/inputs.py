@@ -27,12 +27,8 @@ class InputHandler:
         self.pressed = set()          # Pygame + Joystick Tasten
         self.evdev_pressed = set()    # Pi evdev Tasten
         self.pressed_lock = threading.Lock()  # Thread-Safety für evdev
-        self.press_cooldown = {}
-        self.press_delay = {
-            LEFT: 0.1,
-            RIGHT: 0.1,
-            DOWN: 0.05
-        }
+        self.input_delay = 0.1  # 100 ms für ALLE Inputs
+        self.last_input_time = {}
 
         # Key Mapping für Pygame
         self.key_map = {
@@ -72,20 +68,19 @@ class InputHandler:
         now = time.time()
 
         with self.pressed_lock:
-            # Ist Taste überhaupt gedrückt?
+            # Taste überhaupt gedrückt?
             pressed = action in self.pressed or action in self.evdev_pressed
             if not pressed:
-                self.press_cooldown.pop(action, None)
+                self.last_input_time.pop(action, None)
                 return False
 
-            delay = self.press_delay.get(action, 0)
-            last = self.press_cooldown.get(action, 0)
-
-            if now - last >= delay:
-                self.press_cooldown[action] = now
+            last = self.last_input_time.get(action, 0)
+            if now - last >= self.input_delay:
+                self.last_input_time[action] = now
                 return True
 
         return False
+
 
     # ---------------------------
     # EVDEV Handling für Pi
