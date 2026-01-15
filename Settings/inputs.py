@@ -136,10 +136,6 @@ class InputHandler:
     # Pygame Event Handling
     # ---------------------------
     def process_events(self, events):
-        if not self.started_on_pi:
-            # Nur auf Nicht-Pi Pygame Events clearen
-            self.pressed.clear()
-
         for event in events:
             if event.type == pygame.KEYDOWN:
                 mapped = self.key_map.get(event.key)
