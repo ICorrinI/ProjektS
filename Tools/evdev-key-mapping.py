@@ -5,8 +5,14 @@ from evdev import InputDevice, list_devices, categorize, ecodes
 def find_keyboard():
     for path in list_devices():
         dev = InputDevice(path)
-        if "keyboard" in dev.name.lower():
-            return dev
+        caps = dev.capabilities()
+        # prüfe, ob das Device EV_KEY unterstützt
+        if ecodes.EV_KEY in caps:
+            # optional nur echte Tastatur-Keys filtern
+            keys = [k for k in caps[ecodes.EV_KEY] if k < 256]
+            if keys:
+                print(f"Keyboard gefunden: {dev.name} ({dev.path})")
+                return dev
     return None
 
 def main():
