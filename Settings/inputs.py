@@ -23,7 +23,9 @@ HOLD = "HOLD"
 class InputHandler:
     def __init__(self, started_on_pi=False):
         self.started_on_pi = started_on_pi
-        self.pressed = set()
+        self.pressed = set()          # Pygame + Joystick Tasten
+        self.evdev_pressed = set()    # Pi evdev Tasten
+        self.pressed_lock = threading.Lock()  # Thread-Safety für evdev
 
         # Key Mapping für Pygame
         self.key_map = {
@@ -40,7 +42,6 @@ class InputHandler:
         # Key Mapping für Pi evdev
         self.evdev_map = {}
         if started_on_pi and EVDEV_AVAILABLE:
-            from evdev import ecodes
             self.evdev_map = {
                 ecodes.KEY_UP: UP,
                 ecodes.KEY_DOWN: DOWN,
@@ -62,7 +63,8 @@ class InputHandler:
 
     def is_pressed(self, action):
         """Checkt, ob eine standardisierte Aktion gerade gedrückt wurde"""
-        return action in self.pressed
+        with self.pressed_lock:
+            return action in self.pressed or action in self.evdev_pressed
 
     # ---------------------------
     # EVDEV Handling für Pi
@@ -94,6 +96,7 @@ class InputHandler:
         if not keyboard:
             return
 
+        # Optional: keyboard.grab() kann blockieren
         # try:
         #     keyboard.grab()
         # except OSError as e:
@@ -102,14 +105,14 @@ class InputHandler:
 
         def _reader():
             for event in keyboard.read_loop():
-                if event.type == ecodes.EV_KEY and event.value == 1:
+                if event.type == ecodes.EV_KEY:
                     mapped = self.evdev_map.get(event.code)
                     if mapped:
-                        self.pressed.add(mapped)
-                elif event.type == ecodes.EV_KEY and event.value == 0:
-                    mapped = self.evdev_map.get(event.code)
-                    if mapped:
-                        self.pressed.discard(mapped)
+                        with self.pressed_lock:
+                            if event.value == 1:
+                                self.evdev_pressed.add(mapped)
+                            elif event.value == 0:
+                                self.evdev_pressed.discard(mapped)
 
         threading.Thread(target=_reader, daemon=True).start()
 
@@ -117,7 +120,10 @@ class InputHandler:
     # Pygame Event Handling
     # ---------------------------
     def process_events(self, events):
-        self.pressed.clear()  # Reset vorherige Events
+        if not self.started_on_pi:
+            # Nur auf Nicht-Pi Pygame Events clearen
+            self.pressed.clear()
+
         for event in events:
             if event.type == pygame.KEYDOWN:
                 mapped = self.key_map.get(event.key)
@@ -135,13 +141,18 @@ class InputHandler:
                         self.pressed.add(LEFT)
                     elif event.value > 0.5:
                         self.pressed.add(RIGHT)
+                    else:
+                        self.pressed.discard(LEFT)
+                        self.pressed.discard(RIGHT)
                 elif event.axis == 1:
                     if event.value < -0.5:
                         self.pressed.add(UP)
                     elif event.value > 0.5:
                         self.pressed.add(DOWN)
+                    else:
+                        self.pressed.discard(UP)
+                        self.pressed.discard(DOWN)
             elif event.type == pygame.JOYBUTTONDOWN:
-                # Beispielmapping: Button 0 = CONFIRM, Button 1 = BACK
                 if event.button == 0:
                     self.pressed.add(CONFIRM)
                 elif event.button == 1:
