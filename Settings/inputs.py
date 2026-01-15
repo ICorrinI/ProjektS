@@ -28,7 +28,7 @@ class InputHandler:
         self.evdev_pressed = set()    # Pi evdev Tasten
         self.pressed_lock = threading.Lock()  # Thread-Safety für evdev
         self.evdev_last_time = {}
-        self.evdev_delay = 0.01  # 10 ms
+        self.evdev_delay = 0.1
 
         # Key Mapping für Pygame
         self.key_map = {
