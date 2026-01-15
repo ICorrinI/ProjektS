@@ -27,8 +27,12 @@ class InputHandler:
         self.pressed = set()          # Pygame + Joystick Tasten
         self.evdev_pressed = set()    # Pi evdev Tasten
         self.pressed_lock = threading.Lock()  # Thread-Safety für evdev
-        self.evdev_last_time = {}
-        self.evdev_delay = 0.1
+        self.press_cooldown = {}
+        self.press_delay = {
+            LEFT: 0.1,
+            RIGHT: 0.1,
+            DOWN: 0.05
+        }
 
         # Key Mapping für Pygame
         self.key_map = {
@@ -65,9 +69,23 @@ class InputHandler:
             j.init()
 
     def is_pressed(self, action):
-        """Checkt, ob eine standardisierte Aktion gerade gedrückt wurde"""
+        now = time.time()
+
         with self.pressed_lock:
-            return action in self.pressed or action in self.evdev_pressed
+            # Ist Taste überhaupt gedrückt?
+            pressed = action in self.pressed or action in self.evdev_pressed
+            if not pressed:
+                self.press_cooldown.pop(action, None)
+                return False
+
+            delay = self.press_delay.get(action, 0)
+            last = self.press_cooldown.get(action, 0)
+
+            if now - last >= delay:
+                self.press_cooldown[action] = now
+                return True
+
+        return False
 
     # ---------------------------
     # EVDEV Handling für Pi
@@ -108,28 +126,14 @@ class InputHandler:
 
         def _reader():
             for event in keyboard.read_loop():
-                if event.type != ecodes.EV_KEY:
-                    continue
-
-                mapped = self.evdev_map.get(event.code)
-                if not mapped:
-                    continue
-
-                now = time.time()
-
-                with self.pressed_lock:
-                    last = self.evdev_last_time.get(mapped, 0)
-
-                    # KEYDOWN + KEY_REPEAT
-                    if event.value in (1, 2):
-                        if now - last >= self.evdev_delay:
-                            self.evdev_pressed.add(mapped)
-                            self.evdev_last_time[mapped] = now
-
-                    # KEYUP
-                    elif event.value == 0:
-                        self.evdev_pressed.discard(mapped)
-                        self.evdev_last_time.pop(mapped, None)
+                if event.type == ecodes.EV_KEY:
+                    mapped = self.evdev_map.get(event.code)
+                    if mapped:
+                        with self.pressed_lock:
+                            if event.value == 1:
+                                self.evdev_pressed.add(mapped)
+                            elif event.value == 0:
+                                self.evdev_pressed.discard(mapped)
 
         threading.Thread(target=_reader, daemon=True).start()
 
