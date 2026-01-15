@@ -2,21 +2,39 @@
 import sys
 from evdev import InputDevice, list_devices, categorize, ecodes
 
-def find_keyboard():
+#!/usr/bin/env python3
+import sys
+from evdev import InputDevice, list_devices, ecodes, categorize, util
+import select
+
+def find_first_active_keyboard():
+    candidates = []
+
+    # 1️⃣ alle Devices mit "keyboard" im Namen sammeln
     for path in list_devices():
         dev = InputDevice(path)
-        caps = dev.capabilities()
-        # prüfe, ob das Device EV_KEY unterstützt
-        if ecodes.EV_KEY in caps:
-            # optional nur echte Tastatur-Keys filtern
-            keys = [k for k in caps[ecodes.EV_KEY] if k < 256]
-            if keys:
-                print(f"Keyboard gefunden: {dev.name} ({dev.path})")
-                return dev
-    return None
+        if "keyboard" in dev.name.lower():
+            candidates.append(dev)
+            print(f"Gefundenes Keyboard-Candidate: {dev.name} ({dev.path})")
+
+    if not candidates:
+        print("⚠️ Keine Tastaturen gefunden")
+        return None
+
+    print("\n💡 Bitte eine Taste auf einer Tastatur drücken, um die aktive zu wählen...")
+
+    while True:
+        r, _, _ = select.select([dev.fd for dev in candidates], [], [], 0.1)
+        for fd in r:
+            # das Device zu dem FD finden
+            dev = next(d for d in candidates if d.fd == fd)
+            for event in dev.read():
+                if event.type == ecodes.EV_KEY and event.value == 1:  # key down
+                    print(f"✅ Aktive Tastatur: {dev.name} ({dev.path})")
+                    return dev
 
 def main():
-    keyboard = find_keyboard()
+    keyboard = find_first_active_keyboard()
     if not keyboard:
         print("Keine Tastatur gefunden")
         sys.exit(1)
