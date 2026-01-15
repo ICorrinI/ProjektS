@@ -1,16 +1,13 @@
 #!/usr/bin/env python3
 import sys
-from evdev import InputDevice, list_devices, categorize, ecodes
-
-#!/usr/bin/env python3
-import sys
 from evdev import InputDevice, list_devices, ecodes, categorize, util
 import select
 
 def find_first_active_keyboard():
     candidates = []
 
-    # 1️⃣ alle Devices mit "keyboard" im Namen sammeln
+    # manuel python3 -m evdev-evtest
+    # alle Devices mit "keyboard" im Namen sammeln
     for path in list_devices():
         dev = InputDevice(path)
         if "keyboard" in dev.name.lower():

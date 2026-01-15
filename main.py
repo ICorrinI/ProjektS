@@ -7,6 +7,8 @@ import Settings.colors as fc
 from Settings.output import draw_matrix, draw_matrix_representation
 from gameregistry import GAMES
 from homescreen import run_homescreen
+import select
+
 
 
 # -------------------------------------------------
@@ -53,35 +55,54 @@ if started_on_pi:
 pygame.init()
 pygame.joystick.init()
 
+# -------------------------------------------------
+# PI INPUT HANDLING MIT EVDEV
+# -------------------------------------------------
+def _find_first_active_keyboard():
+    """
+    Alle Devices mit 'keyboard' im Namen sammeln
+    und die erste auswählen, die tatsächlich ein Key-Event liefert.
+    """
+    candidates = []
 
-# -------------------------------------------------
-# PY INPUT HANDLING
-# -------------------------------------------------
-def _find_keyboard():
     for path in list_devices():
         dev = InputDevice(path)
         if "keyboard" in dev.name.lower():
-            return dev
-    return None
+            candidates.append(dev)
+            print(f"Gefundene Keyboard-Candidate: {dev.name} ({dev.path})")
+
+    if not candidates:
+        print("Keine Tastaturen gefunden")
+        return None
+
+    print("\nBitte eine Taste auf einer Tastatur drücken, um die aktive zu wählen...")
+
+    while True:
+        r, _, _ = select.select([d.fd for d in candidates], [], [], 0.1)
+        for fd in r:
+            dev = next(d for d in candidates if d.fd == fd)
+            for event in dev.read():
+                if event.type == ecodes.EV_KEY and event.value == 1:  # key down
+                    print(f"✅ Aktive Tastatur: {dev.name} ({dev.path})")
+                    return dev
+
 
 def start_evdev_keyboard():
-    keyboard = _find_keyboard()
+    keyboard = _find_first_active_keyboard()
     if not keyboard:
-        print("No keyboard found via evdev")
+        print("Keine Tastatur gefunden")
         return
-
-    print(f"evdev keyboard: {keyboard.name}")
 
     try:
         keyboard.grab()
-        print("Keyboard grabbed successfully")
+        print(f"Tastatur '{keyboard.name}' erfolgreich gegrabbt")
     except OSError as e:
         print(f"Failed to grab keyboard: {e}")
         return
 
     def _reader():
         for event in keyboard.read_loop():
-            if event.type == ecodes.EV_KEY and event.value == 1:
+            if event.type == ecodes.EV_KEY and event.value == 1:  # key down
                 mapped = KEY_MAP.get(event.code)
                 if mapped:
                     pygame.event.post(
