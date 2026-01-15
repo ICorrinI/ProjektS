@@ -20,6 +20,7 @@ CONFIRM = "CONFIRM"
 BACK = "BACK"
 DROP = "DROP"
 HOLD = "HOLD"
+INPUTDELAY = 0.05  # Sekunden
 
 class InputHandler:
     def __init__(self, started_on_pi=False):
@@ -27,7 +28,7 @@ class InputHandler:
         self.pressed = set()          # Pygame + Joystick Tasten
         self.evdev_pressed = set()    # Pi evdev Tasten
         self.pressed_lock = threading.Lock()  # Thread-Safety für evdev
-        self.input_delay = 0.1  # 100 ms für ALLE Inputs
+        self.input_delay = INPUTDELAY  # 100 ms für ALLE Inputs
         self.last_input_time = {}
 
         # Key Mapping für Pygame
