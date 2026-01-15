@@ -8,6 +8,7 @@ from Settings import inputs
 from Settings.output import draw_matrix, draw_matrix_representation
 from gameregistry import GAMES
 from homescreen import run_homescreen
+from homescreen import draw_homescreen
 
 # -------------------------------------------------
 # PI MATRIX CHECK
@@ -48,6 +49,10 @@ else:
     screen = pygame.display.set_mode((s.SCREEN_WIDTH * 2, s.SCREEN_HEIGHT))
 
 pygame.display.set_caption("Pixel Arcade")
+
+
+# DRAW Initial Screen
+draw_homescreen(screen)
 
 # -------------------------------------------------
 # INPUT HANDLER INIT

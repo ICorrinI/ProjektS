@@ -23,10 +23,8 @@ def run_homescreen(screen, matrix, offset_canvas, started_on_pi, input_handler: 
         for action in [inputs.UP, inputs.DOWN, inputs.LEFT, inputs.RIGHT, inputs.CONFIRM, inputs.DROP, inputs.HOLD]:
             if input_handler.is_pressed(action):
                 return STATE_START
-
-        # DRAW
-        screen.fill(fc.BLACK)
-        draw_icon_poweroff(screen, 0, 0)
+        
+        draw_homescreen(screen)
 
         if started_on_pi:
             from Settings.output import draw_matrix
@@ -37,3 +35,8 @@ def run_homescreen(screen, matrix, offset_canvas, started_on_pi, input_handler: 
             pygame.display.update()
 
         clock.tick(30)
+
+def draw_homescreen(screen):
+    # DRAW
+    screen.fill(fc.BLACK)
+    draw_icon_poweroff(screen, 0, 0)
