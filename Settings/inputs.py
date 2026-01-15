@@ -2,7 +2,6 @@ import pygame
 import threading
 import os
 import select
-import time
 
 # Für Pi evdev
 try:
@@ -22,15 +21,11 @@ DROP = "DROP"
 HOLD = "HOLD"
 
 class InputHandler:
-    REPEAT_DELAY = 0.2  # 200ms Delay für gedrückthalten
-
     def __init__(self, started_on_pi=False):
         self.started_on_pi = started_on_pi
         self.pressed = set()          # Pygame + Joystick Tasten
         self.evdev_pressed = set()    # Pi evdev Tasten
-        self.evdev_last_time = {}     # für Repeat-Delay
         self.pressed_lock = threading.Lock()  # Thread-Safety für evdev
-        self.keyboard_device = None
 
         # Key Mapping für Pygame
         self.key_map = {
@@ -58,7 +53,7 @@ class InputHandler:
                 ecodes.KEY_SPACE: DROP,
                 ecodes.KEY_C: HOLD
             }
-            self.start_evdev_keyboard(non_blocking=True)
+            self.start_evdev_keyboard()
 
         # Joysticks initialisieren
         pygame.joystick.init()
@@ -69,62 +64,55 @@ class InputHandler:
     def is_pressed(self, action):
         """Checkt, ob eine standardisierte Aktion gerade gedrückt wurde"""
         with self.pressed_lock:
-            if action in self.pressed:
-                return True
-            # evdev mit Repeat-Delay
-            if action in self.evdev_pressed:
-                now = time.time()
-                last = self.evdev_last_time.get(action, 0)
-                if now - last >= self.REPEAT_DELAY:
-                    self.evdev_last_time[action] = now
-                    return True
-        return False
+            return action in self.pressed or action in self.evdev_pressed
 
     # ---------------------------
     # EVDEV Handling für Pi
     # ---------------------------
-    def _find_active_keyboard_non_blocking(self):
-        """Sucht Tastatur non-blocking, returns InputDevice oder None"""
+    def _find_first_active_keyboard(self):
         candidates = []
         for path in list_devices():
             dev = InputDevice(path)
             if "keyboard" in dev.name.lower():
                 candidates.append(dev)
+                print(f"Gefundene Keyboard-Candidate: {dev.name} ({dev.path})")
 
         if not candidates:
+            print("Keine Tastaturen gefunden")
             return None
 
-        r, _, _ = select.select([d.fd for d in candidates], [], [], 0)
-        for fd in r:
-            dev = next(d for d in candidates if d.fd == fd)
-            for event in dev.read():
-                if event.type == ecodes.EV_KEY and event.value == 1:
-                    return dev
-        return None
+        print("Bitte Taste auf einer Tastatur drücken...")
+        while True:
+            r, _, _ = select.select([d.fd for d in candidates], [], [], 0.1)
+            for fd in r:
+                dev = next(d for d in candidates if d.fd == fd)
+                for event in dev.read():
+                    if event.type == ecodes.EV_KEY and event.value == 1:
+                        print(f"✅ Aktive Tastatur: {dev.name} ({dev.path})")
+                        return dev
 
-    def start_evdev_keyboard(self, non_blocking=False):
-        """Startet evdev-Keyboard Thread"""
+    def start_evdev_keyboard(self):
+        keyboard = self._find_first_active_keyboard()
+        if not keyboard:
+            return
+
+        # Optional: keyboard.grab() kann blockieren
+        # try:
+        #     keyboard.grab()
+        # except OSError as e:
+        #     print(f"Failed to grab keyboard: {e}")
+        #     return
+
         def _reader():
-            while True:
-                # Falls noch keine Tastatur gesetzt: non-blocking Suche
-                if self.keyboard_device is None:
-                    dev = self._find_active_keyboard_non_blocking()
-                    if dev:
-                        print(f"✅ Aktive Tastatur gesetzt: {dev.name} ({dev.path})")
-                        self.keyboard_device = dev
-                    else:
-                        time.sleep(0.01)
-                        continue
-
-                for event in self.keyboard_device.read():
-                    if event.type == ecodes.EV_KEY:
-                        mapped = self.evdev_map.get(event.code)
-                        if mapped:
-                            with self.pressed_lock:
-                                if event.value == 1:
-                                    self.evdev_pressed.add(mapped)
-                                elif event.value == 0:
-                                    self.evdev_pressed.discard(mapped)
+            for event in keyboard.read_loop():
+                if event.type == ecodes.EV_KEY:
+                    mapped = self.evdev_map.get(event.code)
+                    if mapped:
+                        with self.pressed_lock:
+                            if event.value == 1:
+                                self.evdev_pressed.add(mapped)
+                            elif event.value == 0:
+                                self.evdev_pressed.discard(mapped)
 
         threading.Thread(target=_reader, daemon=True).start()
 
