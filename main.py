@@ -53,7 +53,11 @@ pygame.display.set_caption("Pixel Arcade")
 
 # DRAW Initial Screen
 draw_homescreen(screen)
-
+if started_on_pi:
+    draw_matrix(screen, matrix, offset_canvas)
+else:
+    draw_matrix_representation(screen)
+    pygame.display.update()
 # -------------------------------------------------
 # INPUT HANDLER INIT
 # -------------------------------------------------
