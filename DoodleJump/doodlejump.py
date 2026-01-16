@@ -118,9 +118,9 @@ def doodle_jump_game(screen, matrix, offset_canvas, started_on_pi, input_handler
                 return
 
             # LEFT / RIGHT movement
-            if input_handler.is_pressed(inputs.LEFT):
+            if input_handler.is_pressed_custom(inputs.LEFT, 0.03):
                 player.world_x -= s.PIXEL_WIDTH
-            if input_handler.is_pressed(inputs.RIGHT):
+            if input_handler.is_pressed_custom(inputs.RIGHT, 0.03):
                 player.world_x += s.PIXEL_WIDTH
 
             # clamp horizontal

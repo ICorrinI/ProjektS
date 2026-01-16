@@ -20,7 +20,7 @@ CONFIRM = "CONFIRM"
 BACK = "BACK"
 DROP = "DROP"
 HOLD = "HOLD"
-INPUTDELAY = 0.05  # Sekunden
+INPUTDELAY = 0.13  # Sekunden
 
 class InputHandler:
     def __init__(self, started_on_pi=False):
@@ -81,7 +81,24 @@ class InputHandler:
                 return True
 
         return False
+    
 
+    def is_pressed_custom(self, action, delay):
+        now = time.time()
+
+        with self.pressed_lock:
+            # Taste überhaupt gedrückt?
+            pressed = action in self.pressed or action in self.evdev_pressed
+            if not pressed:
+                self.last_input_time.pop(action, None)
+                return False
+
+            last = self.last_input_time.get(action, 0)
+            if now - last >= delay:
+                self.last_input_time[action] = now
+                return True
+
+        return False
 
     # ---------------------------
     # EVDEV Handling für Pi
