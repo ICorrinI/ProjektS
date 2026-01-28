@@ -52,7 +52,8 @@ pygame.display.set_caption("Pixel Arcade")
 
 
 # DRAW Initial Screen
-draw_homescreen(screen)
+elapsed = 0
+draw_homescreen(screen, elapsed)
 if started_on_pi:
     draw_matrix(screen, matrix, offset_canvas)
 else:

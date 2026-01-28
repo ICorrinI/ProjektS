@@ -9,6 +9,7 @@ from Settings import inputs
 def doodle_jump_game(screen, matrix, offset_canvas, started_on_pi, input_handler: inputs.InputHandler):
     clock = pygame.time.Clock()
 
+
     class Player:
         def __init__(self):
             self.w = s.DJ_PLAYER_WIDTH

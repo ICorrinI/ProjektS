@@ -82,12 +82,12 @@ class InputHandler:
 
         return False
     
-
+    #Doodle-Jump-Custom Input
     def is_pressed_custom(self, action, delay):
         now = time.time()
 
         with self.pressed_lock:
-            # Taste überhaupt gedrückt?
+            
             pressed = action in self.pressed or action in self.evdev_pressed
             if not pressed:
                 self.last_input_time.pop(action, None)

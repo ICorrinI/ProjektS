@@ -49,6 +49,9 @@ def tetris_game(screen, matrix, offset_canvas, started_on_pi, input_handler: inp
     piece = new_piece()
     next_pieces = [new_piece() for _ in range(3)]
 
+    def is_game_over(p):
+        return not can_move(p["x"], p["y"], p["shape"])
+
     def draw_next_pieces():
         for i, p in enumerate(next_pieces):
             shape = p["shape"]
@@ -116,7 +119,7 @@ def tetris_game(screen, matrix, offset_canvas, started_on_pi, input_handler: inp
         return True
 
     def lock_piece():
-        nonlocal piece, can_hold
+        nonlocal piece, can_hold, run
         for y, row in enumerate(piece["shape"]):
             for x, cell in enumerate(row):
                 if cell:
@@ -124,6 +127,8 @@ def tetris_game(screen, matrix, offset_canvas, started_on_pi, input_handler: inp
         piece = next_pieces.pop(0)
         next_pieces.append(new_piece())
         can_hold = True
+        if is_game_over(piece):
+            run = False  # Game Over
 
     def clear_lines():
         nonlocal score
@@ -176,6 +181,8 @@ def tetris_game(screen, matrix, offset_canvas, started_on_pi, input_handler: inp
                 held_piece, piece = piece, held_piece
             piece["x"] = s.TETRIS_COLS // 2 - len(piece["shape"][0]) // 2
             piece["y"] = 0
+            if is_game_over(piece):
+                run = False  # Game Over
 
         # Fall-Timer
         fall_timer += 1
@@ -230,3 +237,7 @@ def tetris_game(screen, matrix, offset_canvas, started_on_pi, input_handler: inp
             pygame.display.update()
 
         clock.tick(s.TETRIS_FALL_SPEED)
+
+    # Game Over Screen
+    pygame.display.update()
+    pygame.time.wait(2000)  # 2 Sekunden Pause
