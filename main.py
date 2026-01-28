@@ -7,8 +7,7 @@ import Settings.colors as fc
 from Settings import inputs
 from Settings.output import draw_matrix, draw_matrix_representation
 from gameregistry import GAMES
-from homescreen import run_homescreen
-from homescreen import draw_homescreen
+from homescreen import draw_state1, run_homescreen
 
 # -------------------------------------------------
 # PI MATRIX CHECK
@@ -50,10 +49,6 @@ else:
 
 pygame.display.set_caption("Pixel Arcade")
 
-
-# DRAW Initial Screen
-elapsed = 0
-draw_homescreen(screen, elapsed)
 if started_on_pi:
     draw_matrix(screen, matrix, offset_canvas)
 else:

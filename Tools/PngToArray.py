@@ -47,6 +47,6 @@ def png_to_draw_function(
 
 # Beispiel
 png_to_draw_function(
-    "Tetris.png",
+    "Relax&play.png",
     function_name="draw_icon_tetris"
 )
