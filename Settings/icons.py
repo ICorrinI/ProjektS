@@ -161,6 +161,38 @@ def draw_icon_tetris(screen, x_offset, y_offset):
 
     draw_icon(screen, x_offset, y_offset,pixel_array=icon_array,color_mapping=icon_colors,pixel_size=s.PIXEL_WIDTH)
 
+def draw_icon_mario(screen, x_offset, y_offset):
+    icon_array = np.array([
+    [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0],
+    [0, 0, 0, 0, 2, 2, 2, 3, 3, 4, 3, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 2, 3, 2, 3, 3, 4, 3, 3, 3, 0, 0, 0],
+    [0, 0, 0, 0, 2, 3, 2, 2, 3, 3, 4, 3, 3, 3, 0, 0],
+    [0, 0, 0, 0, 2, 3, 3, 3, 3, 4, 4, 4, 4, 0, 0, 0],
+    [0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 1, 1, 5, 1, 1, 5, 1, 1, 0, 0, 0, 0],
+    [0, 0, 0, 1, 1, 1, 5, 1, 1, 5, 1, 1, 1, 0, 0, 0],
+    [0, 0, 1, 1, 1, 1, 5, 5, 5, 5, 1, 1, 1, 1, 0, 0],
+    [0, 0, 3, 3, 1, 5, 6, 5, 5, 6, 5, 1, 3, 3, 0, 0],
+    [0, 0, 3, 3, 3, 5, 5, 5, 5, 5, 5, 3, 3, 3, 0, 0],
+    [0, 0, 3, 3, 5, 5, 5, 5, 5, 5, 5, 5, 3, 3, 0, 0],
+    [0, 0, 0, 0, 5, 5, 5, 0, 0, 5, 5, 5, 0, 0, 0, 0],
+    [0, 0, 0, 2, 2, 2, 0, 0, 0, 0, 2, 2, 2, 0, 0, 0],
+    [0, 0, 2, 2, 2, 2, 0, 0, 0, 0, 2, 2, 2, 2, 0, 0],
+    ])
+
+    icon_colors = {
+        0: (0, 0, 0),
+        1: (255, 0, 0),
+        2: (128, 64, 0),
+        3: (255, 201, 14),
+        4: (64, 0, 0),
+        5: (63, 72, 204),
+        6: (255, 242, 0),
+    }
+
+    draw_icon(screen, x_offset, y_offset,pixel_array=icon_array,color_mapping=icon_colors,pixel_size=s.PIXEL_WIDTH)
+
 def draw_icon(screen, x_offset, y_offset, pixel_array, color_mapping, pixel_size):
     """
     Zeichnet ein Icon basierend auf einem 2D-Array von Zahlen und einem Farb-Mapping.

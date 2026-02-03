@@ -2,6 +2,7 @@ from Snake.snake import snake_game
 from DoodleJump.doodlejump import doodle_jump_game
 from Tetris.tetris import tetris_game
 from Dino.dino import dino_game
+from Mario.mario import mario_game
 
 from Settings.icons import (
     draw_icon_snake,
@@ -9,6 +10,7 @@ from Settings.icons import (
     draw_icon_dino,
     draw_icon_poweroff,
     draw_icon_tetris,
+    draw_icon_mario,
 )
 
 # Jedes Spiel = ein Dict
@@ -44,6 +46,12 @@ GAMES = [
         "id": "tetris",
         "icon": draw_icon_tetris,
         "run": tetris_game,
+        "enabled": True,
+    },
+    {
+        "id": "mario",
+        "icon": draw_icon_mario,
+        "run": mario_game,
         "enabled": True,
     },
 ]
