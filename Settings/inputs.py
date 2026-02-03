@@ -31,26 +31,44 @@ class InputHandler:
         self.input_delay = INPUTDELAY  # 100 ms für ALLE Inputs
         self.last_input_time = {}
 
-        # Key Mapping für Pygame
+        # Key Mapping für Pygame (Pfeiltasten + WASD)
         self.key_map = {
+            # Pfeiltasten
             pygame.K_UP: UP,
             pygame.K_DOWN: DOWN,
             pygame.K_LEFT: LEFT,
             pygame.K_RIGHT: RIGHT,
+
+            # WASD
+            pygame.K_w: UP,
+            pygame.K_s: DOWN,
+            pygame.K_a: LEFT,
+            pygame.K_d: RIGHT,
+
+            # Aktionen
             pygame.K_RETURN: CONFIRM,
             pygame.K_ESCAPE: BACK,
             pygame.K_SPACE: DROP,
             pygame.K_c: HOLD,
         }
 
-        # Key Mapping für Pi evdev
+        # Key Mapping für Pi evdev (Pfeiltasten + WASD)
         self.evdev_map = {}
         if started_on_pi and EVDEV_AVAILABLE:
             self.evdev_map = {
+                # Pfeiltasten
                 ecodes.KEY_UP: UP,
                 ecodes.KEY_DOWN: DOWN,
                 ecodes.KEY_LEFT: LEFT,
                 ecodes.KEY_RIGHT: RIGHT,
+
+                # WASD
+                ecodes.KEY_W: UP,
+                ecodes.KEY_S: DOWN,
+                ecodes.KEY_A: LEFT,
+                ecodes.KEY_D: RIGHT,
+
+                # Aktionen
                 ecodes.KEY_ENTER: CONFIRM,
                 ecodes.KEY_KPENTER: CONFIRM,
                 ecodes.KEY_ESC: BACK,
@@ -82,12 +100,11 @@ class InputHandler:
 
         return False
     
-    #Doodle-Jump-Custom Input
+    # Doodle-Jump-Custom Input
     def is_pressed_custom(self, action, delay):
         now = time.time()
 
         with self.pressed_lock:
-            
             pressed = action in self.pressed or action in self.evdev_pressed
             if not pressed:
                 self.last_input_time.pop(action, None)
@@ -130,13 +147,6 @@ class InputHandler:
         if not keyboard:
             return
 
-        # Optional: keyboard.grab() kann blockieren
-        # try:
-        #     keyboard.grab()
-        # except OSError as e:
-        #     print(f"Failed to grab keyboard: {e}")
-        #     return
-
         def _reader():
             for event in keyboard.read_loop():
                 if event.type == ecodes.EV_KEY:
@@ -159,6 +169,7 @@ class InputHandler:
                 mapped = self.key_map.get(event.key)
                 if mapped:
                     self.pressed.add(mapped)
+
             elif event.type == pygame.KEYUP:
                 mapped = self.key_map.get(event.key)
                 if mapped:
@@ -174,6 +185,7 @@ class InputHandler:
                     else:
                         self.pressed.discard(LEFT)
                         self.pressed.discard(RIGHT)
+
                 elif event.axis == 1:
                     if event.value < -0.5:
                         self.pressed.add(UP)
@@ -182,11 +194,13 @@ class InputHandler:
                     else:
                         self.pressed.discard(UP)
                         self.pressed.discard(DOWN)
+
             elif event.type == pygame.JOYBUTTONDOWN:
                 if event.button == 0:
                     self.pressed.add(CONFIRM)
                 elif event.button == 1:
                     self.pressed.add(BACK)
+
             elif event.type == pygame.JOYBUTTONUP:
                 if event.button == 0:
                     self.pressed.discard(CONFIRM)
