@@ -161,6 +161,35 @@ def draw_icon_tetris(screen, x_offset, y_offset):
 
     draw_icon(screen, x_offset, y_offset,pixel_array=icon_array,color_mapping=icon_colors,pixel_size=s.PIXEL_WIDTH)
 
+def draw_icon_tictactoe(screen, x_offset, y_offset):
+    icon_array = np.array([
+    [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 2, 0, 0, 0, 2, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 2, 2, 0, 2, 2, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 2, 2, 2, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 2, 2, 2, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 2, 2, 0, 2, 2, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 2, 0, 0, 0, 2, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 3, 3, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 3, 3, 3, 3, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 1, 0, 3, 3, 0, 0, 3, 3, 0],
+    [0, 0, 0, 0, 0, 0, 0, 1, 0, 3, 3, 0, 0, 3, 3, 0],
+    [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 3, 3, 3, 3, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 3, 3, 0, 0, 0],
+    ])
+
+    icon_colors = {
+        0: (255, 255, 255),
+        1: (0, 0, 0),
+        2: (237, 28, 36),
+        3: (0, 162, 232),
+    }
+
+    draw_icon(screen, x_offset, y_offset,pixel_array=icon_array,color_mapping=icon_colors,pixel_size=s.PIXEL_WIDTH)
+
 def draw_icon(screen, x_offset, y_offset, pixel_array, color_mapping, pixel_size):
     """
     Zeichnet ein Icon basierend auf einem 2D-Array von Zahlen und einem Farb-Mapping.
@@ -187,3 +216,5 @@ def draw_icon(screen, x_offset, y_offset, pixel_array, color_mapping, pixel_size
                 color,
                 (x_offset + x*pixel_size, y_offset + y*pixel_size, pixel_size, pixel_size)
             )
+
+
