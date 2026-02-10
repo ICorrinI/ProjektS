@@ -83,19 +83,31 @@ def doodle_jump_game(screen, matrix, offset_canvas, started_on_pi, input_handler
                 return False
         return True
 
-    def generate_platform_above(existing, top_world_y):
+    def generate_platform_above(existing, top_world_y, score):
         vertical_spacing = random.randint(
             int(s.DJ_PLATFORM_SPACING - 0.2 * s.DJ_PLATFORM_SPACING),
             int(s.DJ_PLATFORM_SPACING + 0.15 * s.DJ_PLATFORM_SPACING)
         )
         new_y = top_world_y - vertical_spacing
 
+        # 🔥 Plattform-Breite abhängig vom Score
+        if score >= 50:
+            platform_width = int(s.DJ_PLATFORM_WIDTH * 0.4)  # sehr klein
+        elif score >= 30:
+            platform_width = int(s.DJ_PLATFORM_WIDTH * 0.6)  # klein
+        elif score >= 10:
+            platform_width = int(s.DJ_PLATFORM_WIDTH * 0.8)  # leicht kleiner
+        else:
+            platform_width = s.DJ_PLATFORM_WIDTH  # normal
+
         for _ in range(50):
-            x = random.randint(0, s.SCREEN_WIDTH - s.DJ_PLATFORM_WIDTH)
-            cand = pygame.Rect(x, new_y, s.DJ_PLATFORM_WIDTH, s.DJ_PLATFORM_HEIGHT)
+            x = random.randint(0, s.SCREEN_WIDTH - platform_width)
+            cand = pygame.Rect(x, new_y, platform_width, s.DJ_PLATFORM_HEIGHT)
             if can_place(cand, existing):
-                return Platform(x, new_y)
-        return Platform(random.randint(0, s.SCREEN_WIDTH - s.DJ_PLATFORM_WIDTH), new_y)
+                return Platform(x, new_y, platform_width)
+
+        return Platform(random.randint(0, s.SCREEN_WIDTH - platform_width), new_y, platform_width)
+
 
     # --- main loop ---
     while True:
@@ -142,7 +154,7 @@ def doodle_jump_game(screen, matrix, offset_canvas, started_on_pi, input_handler
                 if p.rect.y - camera_y > s.SCREEN_HEIGHT:
                     score += 1
                     filtered = [q for q in platforms if q is not p]
-                    new_platforms.append(generate_platform_above(filtered, top_world_y))
+                    new_platforms.append(generate_platform_above(filtered, top_world_y, score))
                 else:
                     new_platforms.append(p)
             platforms = sorted(new_platforms, key=lambda p: p.rect.y)
@@ -185,4 +197,10 @@ def doodle_jump_game(screen, matrix, offset_canvas, started_on_pi, input_handler
                 draw_matrix_representation(screen)
                 pygame.display.update()
 
-            clock.tick(s.DJ_SPEED)
+           # Dynamische Geschwindigkeit
+            if score >= 10:
+                current_speed = 40   # schneller
+            else:
+                current_speed = s.DJ_SPEED  # normal (30)
+
+            clock.tick(current_speed)

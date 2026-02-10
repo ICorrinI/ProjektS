@@ -1,5 +1,6 @@
 import pygame
 import json
+from Settings.icons import draw_icon_mario_mini
 from Settings.output import draw_matrix_representation, draw_matrix, draw_shaded_block
 from Settings.colors import *
 from Settings.settings import (
@@ -17,7 +18,6 @@ from Settings.settings import (
     INPUT_DELAY,
 )
 from Settings import inputs
-
 
 def mario_game(screen, matrix, offset_canvas, started_on_pi, input_handler: inputs.InputHandler):
     part_name = "part1"
@@ -39,13 +39,15 @@ def mario_game(screen, matrix, offset_canvas, started_on_pi, input_handler: inpu
     WORLD_PIXEL_HEIGHT = MAP_HEIGHT * PIXEL_WIDTH
 
     camera_x = 0
-    DEATH_Y = 32 * PIXEL_WIDTH  # Grenze nach unten
+    DEATH_Y = 32 * PIXEL_WIDTH
 
     # -----------------------------
     # PLAYER
     # -----------------------------
     class Player:
         def __init__(self):
+            self.w = 2 * PIXEL_WIDTH
+            self.h = 3 * PIXEL_WIDTH
             self.reset()
 
         def reset(self):
@@ -53,48 +55,63 @@ def mario_game(screen, matrix, offset_canvas, started_on_pi, input_handler: inpu
             self.tile_y = SPAWN_TILE_Y if SPAWN_TILE_Y is not None else MAP_HEIGHT - 1
             self.x = self.tile_x * PIXEL_WIDTH
             self.y = self.tile_y * PIXEL_WIDTH
+            self.vy = 0
+            self.on_ground = False
 
             self.direction = 0
             self.hold_time = 0.0
+            self.speed_multiplier = 1.0
 
-            self.vy = 0  # vertikale Geschwindigkeit
-            self.on_ground = False
+        def update(self, dt, world_map, physical_direction, step_triggered):
+            # ---------------------------------
+            # HOLD TIME läuft solange gedrückt
+            # ---------------------------------
+            if physical_direction != 0:
+                self.direction = physical_direction
+                self.hold_time += dt
+                progress = min(self.hold_time / ACCEL_TIME, 1.0)
+                self.speed_multiplier = BASE_SPEED * (1 + progress * (MAX_SPEED_MULTIPLIER - 1))
+            else:
+                self.direction = 0
+                self.hold_time = 0.0
+                self.speed_multiplier = BASE_SPEED
 
-            self.rect = pygame.Rect(self.x, self.y, PIXEL_WIDTH, PIXEL_WIDTH)
+            print(f"Direction: {self.direction}, Hold Time: {self.hold_time:.2f}s, Speed Multiplier: {self.speed_multiplier:.2f}")
 
-        @property
-        def world_x(self):
-            return self.x
+            # ---------------------------------
+            # Bewegung nur bei Custom-Trigger
+            # ---------------------------------
+            if step_triggered and self.direction != 0:
+                steps = int(self.speed_multiplier)
 
-        @property
-        def world_y(self):
-            return self.y
+                for _ in range(steps):
+                    next_tile_x = self.tile_x + self.direction
+                    collision = False
 
-        def update(self, dt, world_map):
-            # -----------------
-            # Horizontale Bewegung: Snap-to-Grid
-            # -----------------
-            if self.direction != 0:
-                next_tile_x = self.tile_x + self.direction
-                if 0 <= next_tile_x < len(world_map[0]):
-                    if world_map[self.tile_y][next_tile_x] == 0:
+                    for dy in range(self.h // PIXEL_WIDTH):
+                        check_y = self.tile_y + dy
+                        if 0 <= next_tile_x < len(world_map[0]) and check_y < len(world_map):
+                            if world_map[check_y][next_tile_x] != 0:
+                                collision = True
+                                break
+
+                    if not collision:
                         self.tile_x = next_tile_x
                         self.x = self.tile_x * PIXEL_WIDTH
+                    else:
+                        break
 
-            # -----------------
-            # Vertikale Bewegung (Gravitation)
-            # -----------------
+            # ---------------------------------
+            # GRAVITY
+            # ---------------------------------
             self.vy += GRAVITY * dt
             new_y = self.y + self.vy * dt
 
-            # -----------------
-            # Death-Border unten
-            # -----------------
             if new_y >= DEATH_Y:
-                self.reset()  # sofort zurücksetzen
-                return  # wichtig, damit keine Kollisionen mehr geprüft werden
+                self.reset()
+                return
 
-            future_rect = pygame.Rect(self.x, new_y, PIXEL_WIDTH, PIXEL_WIDTH)
+            future_rect = pygame.Rect(self.x, new_y, self.w, self.h)
             left_tile = int(future_rect.left // PIXEL_WIDTH)
             right_tile = int((future_rect.right - 1) // PIXEL_WIDTH)
             top_tile = int(future_rect.top // PIXEL_WIDTH)
@@ -102,15 +119,13 @@ def mario_game(screen, matrix, offset_canvas, started_on_pi, input_handler: inpu
 
             self.on_ground = False
 
-            # Prüfe Kollision unten
             for tx in range(left_tile, right_tile + 1):
                 if bottom_tile < len(world_map) and world_map[bottom_tile][tx] != 0:
-                    new_y = bottom_tile * PIXEL_WIDTH - PIXEL_WIDTH
+                    new_y = bottom_tile * PIXEL_WIDTH - self.h
                     self.vy = 0
                     self.on_ground = True
                     break
 
-            # Prüfe Kollision oben
             for tx in range(left_tile, right_tile + 1):
                 if top_tile >= 0 and world_map[top_tile][tx] != 0:
                     new_y = (top_tile + 1) * PIXEL_WIDTH
@@ -119,12 +134,14 @@ def mario_game(screen, matrix, offset_canvas, started_on_pi, input_handler: inpu
 
             self.y = new_y
             self.tile_y = int(self.y // PIXEL_WIDTH)
-            self.rect.topleft = (self.x, self.y)
 
         def jump(self):
             if self.on_ground:
                 self.vy = -JUMP_VELOCITY
                 self.on_ground = False
+
+        def draw(self, camera_x):
+            draw_icon_mario_mini(screen, int(self.x - camera_x), int(self.y))
 
     player = Player()
 
@@ -134,55 +151,53 @@ def mario_game(screen, matrix, offset_canvas, started_on_pi, input_handler: inpu
     run = True
     while run:
         dt = clock.tick(60) / 1000.0
-
-        # -----------------------------
-        # UPDATE PLAYER ZUERST
-        # -----------------------------
-        player.update(dt, world_map)
-
-        # -----------------------------
-        # INPUT
-        # -----------------------------
         events = pygame.event.get()
         input_handler.process_events(events)
 
         if input_handler.is_pressed_custom(inputs.BACK, INPUT_DELAY):
             return
 
-        # Horizontal bewegen mit Delay
-        player.direction = 0
-        if input_handler.is_pressed_custom(inputs.LEFT, INPUT_DELAY):
-            player.direction = -1
-        elif input_handler.is_pressed_custom(inputs.RIGHT, INPUT_DELAY):
-            player.direction = 1
+        # ---------------------------------
+        # PHYSICAL HOLD CHECK (kein Delay!)
+        # ---------------------------------
+        physical_direction = 0
+        if inputs.LEFT in input_handler.pressed:
+            physical_direction = -1
+        elif inputs.RIGHT in input_handler.pressed:
+            physical_direction = 1
 
-        # Jump sofort, nur wenn player.on_ground ist
+        # ---------------------------------
+        # CUSTOM STEP CHECK
+        # ---------------------------------
+        step_triggered = False
+        if input_handler.is_pressed_custom(inputs.LEFT, INPUT_DELAY):
+            step_triggered = True
+        elif input_handler.is_pressed_custom(inputs.RIGHT, INPUT_DELAY):
+            step_triggered = True
+
         if inputs.CONFIRM in input_handler.pressed or inputs.UP in input_handler.pressed:
             player.jump()
 
-        # -----------------------------
-        # CAMERA MIT LINKS + RECHTS SCROLL
-        # -----------------------------
-        player_screen_x = player.world_x - camera_x
+        player.update(dt, world_map, physical_direction, step_triggered)
 
-        left_scroll_border = SCREEN_WIDTH * 0.4  # 40% vom linken Rand
-        right_scroll_border = SCREEN_WIDTH * 0.6 # 60% vom rechten Rand
+        # ---------------------------------
+        # CAMERA
+        # ---------------------------------
+        player_screen_x = player.x - camera_x
+        left_scroll_border = SCREEN_WIDTH * 0.4
+        right_scroll_border = SCREEN_WIDTH * 0.6
 
-        # Scroll nach rechts
         if player_screen_x > right_scroll_border:
             camera_x += player_screen_x - right_scroll_border
-        # Scroll nach links
         elif player_screen_x < left_scroll_border:
             camera_x -= left_scroll_border - player_screen_x
 
-        # Clamp Camera
         camera_x = max(0, min(camera_x, WORLD_PIXEL_WIDTH - SCREEN_WIDTH))
 
-        # -----------------------------
+        # ---------------------------------
         # RENDER
-        # -----------------------------
+        # ---------------------------------
         screen.fill((0, 0, 0))
-
         for y, row in enumerate(world_map):
             for x, tile_id in enumerate(row):
                 if tile_id == 0:
@@ -191,24 +206,13 @@ def mario_game(screen, matrix, offset_canvas, started_on_pi, input_handler: inpu
                 world_x = x * PIXEL_WIDTH
                 screen_x = world_x - camera_x
                 if -PIXEL_WIDTH <= screen_x <= SCREEN_WIDTH:
-                    pygame.draw.rect(
-                        screen,
-                        color,
-                        pygame.Rect(screen_x, y * PIXEL_WIDTH, PIXEL_WIDTH, PIXEL_WIDTH),
-                    )
+                    pygame.draw.rect(screen, color, pygame.Rect(screen_x, y * PIXEL_WIDTH, PIXEL_WIDTH, PIXEL_WIDTH))
 
-        # Player zeichnen
-        draw_shaded_block(
-            screen,
-            pygame.Rect(int(player.world_x - camera_x), int(player.world_y), PIXEL_WIDTH, PIXEL_WIDTH),
-            (255, 120, 120),
-            (200, 0, 0),
-            (120, 0, 0),
-        )
+        player.draw(camera_x)
 
-        # Matrix Output
         if started_on_pi:
             offset_canvas = draw_matrix(screen, matrix, offset_canvas)
         else:
             draw_matrix_representation(screen)
             pygame.display.update()
+

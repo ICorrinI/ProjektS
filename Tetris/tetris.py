@@ -184,9 +184,18 @@ def tetris_game(screen, matrix, offset_canvas, started_on_pi, input_handler: inp
             if is_game_over(piece):
                 run = False  # Game Over
 
-        # Fall-Timer
+        # Dynamische Geschwindigkeit je nach Score
+        if score >= 8:
+            current_speed = 3
+        elif score >= 6:
+            current_speed = 5
+        elif score >= 3:
+            current_speed = 10
+        else:
+            current_speed = s.TETRIS_FALL_SPEED  # Standard (30)
+
         fall_timer += 1
-        if fall_timer >= s.TETRIS_FALL_SPEED:
+        if fall_timer >= current_speed:
             fall_timer = 0
             if can_move(piece["x"], piece["y"] + 1, piece["shape"]):
                 piece["y"] += 1
@@ -239,5 +248,24 @@ def tetris_game(screen, matrix, offset_canvas, started_on_pi, input_handler: inp
         clock.tick(s.TETRIS_FALL_SPEED)
 
     # Game Over Screen
-    pygame.display.update()
-    pygame.time.wait(2000)  # 2 Sekunden Pause
+    # -----------------------------
+# Einfacher Game Over Screen für Matrix
+# -----------------------------
+ # -----------------------------
+# Einfacher Game Over Screen für Matrix, Score in der Mitte
+# -----------------------------
+    screen.fill((0, 0, 0))  # Schwarzer Hintergrund
+
+    # Score in der Mitte der Tetris-Spielebene
+    center_x = s.TETRIS_COLS // 2
+    center_y = s.TETRIS_ROWS // 2
+    draw_score(screen, score)
+
+    # Matrix-Ausgabe auf Pi, falls nötig
+    if started_on_pi:
+        offset_canvas = draw_matrix(screen, matrix, offset_canvas)
+    else:
+        draw_matrix_representation(screen)
+        pygame.display.update()
+
+    pygame.time.wait(3000)  # 3 Sekunden Pause, Score sichtbar

@@ -190,6 +190,23 @@ def draw_icon_mario(screen, x_offset, y_offset):
         5: (63, 72, 204),
         6: (255, 242, 0),
     }
+    
+    draw_icon(screen, x_offset, y_offset,pixel_array=icon_array,color_mapping=icon_colors,pixel_size=s.PIXEL_WIDTH)
+
+def draw_icon_mario_mini(screen, x_offset, y_offset):
+    icon_array = np.array([
+        [1, 1],  # Rot (Mütze)
+        [2, 2],  # Haut (Gesicht)
+        [3, 3],  # Blau (Latzhose)
+    ])
+
+    icon_colors = {
+        0: (0, 0, 0),          # Hintergrund
+        1: (255, 0, 0),        # Rot
+        2: (255, 201, 14),    # Hautfarbe
+        3: (0, 0, 255),        # Blau
+    }
+
 
     draw_icon(screen, x_offset, y_offset,pixel_array=icon_array,color_mapping=icon_colors,pixel_size=s.PIXEL_WIDTH)
 
