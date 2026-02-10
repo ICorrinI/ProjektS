@@ -10,6 +10,94 @@ from Settings import inputs
 def snake_game(screen, matrix, offset_canvas, started_on_pi, input_handler: inputs.InputHandler):
     clock = pygame.time.Clock()
 
+    # -----------------------------
+    # LEVEL AUSWAHL (Pixel-Version)
+    # -----------------------------
+    selected_level = 0   # 0 = 1, 1 = 2
+    choosing_level = True
+
+    def draw_pixel_number(number, center_x, center_y, selected):
+        size = BLOCK_SIZE
+        color_light = SNAKE_LIGHT if selected else (80, 80, 80)
+        color_base = SNAKE_BASE if selected else (50, 50, 50)
+        color_dark = SNAKE_DARK if selected else (30, 30, 30)
+
+        # 5x3 Pixel-Muster
+        numbers = {
+            1: [
+                "010",
+                "110",
+                "010",
+                "010",
+                "111"
+            ],
+            2: [
+                "111",
+                "001",
+                "111",
+                "100",
+                "111"
+            ]
+        }
+
+        pattern = numbers[number]
+
+        start_x = center_x - (len(pattern[0]) * size) // 2
+        start_y = center_y - (len(pattern) * size) // 2
+
+        for row_i, row in enumerate(pattern):
+            for col_i, cell in enumerate(row):
+                if cell == "1":
+                    rect = pygame.Rect(
+                        start_x + col_i * size,
+                        start_y + row_i * size,
+                        size,
+                        size
+                    )
+                    draw_shaded_block(screen, rect, color_light, color_base, color_dark)
+
+    while choosing_level:
+        events = pygame.event.get()
+        input_handler.process_events(events)
+
+        if input_handler.is_pressed(inputs.BACK):
+            return
+
+        if input_handler.is_pressed(inputs.UP):
+            selected_level = 0
+        elif input_handler.is_pressed(inputs.DOWN):
+            selected_level = 1
+
+        if input_handler.is_pressed(inputs.CONFIRM):
+            choosing_level = False
+
+        screen.fill("black")
+
+        center_x = SCREEN_WIDTH // 2
+        center_y = SCREEN_HEIGHT // 2
+
+        # 1 oben
+        draw_pixel_number(1, center_x, center_y - 4 * BLOCK_SIZE, selected_level == 0)
+        # 2 unten
+        draw_pixel_number(2, center_x, center_y + 4 * BLOCK_SIZE, selected_level == 1)
+
+        if started_on_pi:
+            offset_canvas = draw_matrix(screen, matrix, offset_canvas)
+        else:
+            draw_matrix_representation(screen)
+            pygame.display.update()
+
+        clock.tick(15)
+            # -----------------------------
+        # Geschwindigkeit je nach Level
+        # -----------------------------
+        if selected_level == 0:   # Level 1
+            game_speed = SNAKE_SPEED
+        else:                     # Level 2
+            game_speed = SNAKE_SPEED + 10   # schneller
+
+
+
     class Snake:
         def __init__(self):
             self.reset()
@@ -143,7 +231,7 @@ def snake_game(screen, matrix, offset_canvas, started_on_pi, input_handler: inpu
                 elif input_handler.is_pressed(inputs.BACK):
                     return
 
-                clock.tick(SNAKE_SPEED)
+                clock.tick(game_speed)
             continue
 
         # MATRIX OUTPUT -----------------------
@@ -153,4 +241,4 @@ def snake_game(screen, matrix, offset_canvas, started_on_pi, input_handler: inpu
             draw_matrix_representation(screen)
             pygame.display.update()
 
-        clock.tick(SNAKE_SPEED)
+        clock.tick(game_speed)
