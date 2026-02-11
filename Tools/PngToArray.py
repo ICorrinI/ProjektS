@@ -52,3 +52,7 @@ png_to_draw_function(
 )
 
 
+png_to_draw_function(
+    "ReactionRunner.png",
+    function_name="draw_icon_reaction_runner"
+)

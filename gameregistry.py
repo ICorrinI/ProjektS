@@ -3,6 +3,7 @@ from DoodleJump.doodlejump import doodle_jump_game
 from Tetris.tetris import tetris_game
 from Dino.dino import dino_game
 from TicTacToe.tictactoe import tictactoe_game
+from ReactionRunner.reactionrunner import reaction_runner_game
 
 from Settings.icons import (
     draw_icon_snake,
@@ -11,6 +12,7 @@ from Settings.icons import (
     draw_icon_poweroff,
     draw_icon_tetris,
     draw_icon_tictactoe,
+    draw_icon_reaction_runner,
 )
 
 # Jedes Spiel = ein Dict
@@ -55,5 +57,12 @@ GAMES = [
         "run": tictactoe_game,
         "enabled": True,
     },
+
+    {
+        "id": "reaction_runner",
+        "icon": draw_icon_reaction_runner,
+        "run": reaction_runner_game,
+        "enabled": True,
+    }
 
 ]
