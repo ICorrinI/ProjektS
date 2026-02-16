@@ -66,7 +66,8 @@ TETRIS_FALL_SPEED = 30
 
 # Mario
 MARIO_WORLD = "Mario/1.json"
-SCROLL_BORDER = SCREEN_WIDTH * 0.6
+LEFT_SCROLL_BORDER = SCREEN_WIDTH * 0.4
+RIGHT_SCROLL_BORDER = SCREEN_WIDTH * 0.6
 
 BASE_SPEED = 1          
 MAX_SPEED_MULTIPLIER = 2
@@ -74,8 +75,11 @@ ACCEL_TIME = 5
 
 MOVE_INPUT_DELAY = 0.01
 
-SPAWN_TILE_X = 6                        
-SPAWN_TILE_Y = 10                       
+# Mario Spawn-Marker (Tile-Nummer, die als Spawnpunkt fungiert - gilt für alle Maps und Parts)
+MAP_SPAWN_MARKER = 9
+
+# Mario Finish-Marker (Tile-Nummer, die das Ende eines Parts markiert)
+MAP_FINISH_MARKER = 10
 
 GRAVITY = 50 * PIXEL_WIDTH              
 JUMP_VELOCITY = 35 * PIXEL_WIDTH        

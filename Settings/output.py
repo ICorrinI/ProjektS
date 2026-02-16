@@ -27,22 +27,33 @@ def draw_matrix_representation(screen):
     pygame.draw.rect(screen, (0, 0, 0), (s.SCREEN_WIDTH, 0, 1, s.SCREEN_HEIGHT))# Seperating line
 
 # This draws the score on the screen
-# Slightly optimized to perfrom less drawing operations
+# Unterstützt jetzt auch Scores über 99 (flexibel erweitert, zentral positioniert)
 def draw_score(screen, number):
-    if number > 99:
-        number = 99# Overflow
-    number_left = number // 10# Get tens place
-    number_right = number - (number_left * 10)# Get ones place
+    # Begrenzung für sehr große Zahlen
+    if number > 9999:
+        number = 9999
     
-    for i in range(5):
-        for j in range(3):
-            left_pos_x = s.SCORE_POSITION_X + (j * s.PIXEL_WIDTH)
-            right_pos_x = left_pos_x + (5 * s.PIXEL_WIDTH)
-            pos_y = s.SCORE_POSITION_Y + (i * s.PIXEL_WIDTH)
-            if(score.SCORE[number_left][i][j]):
-                pygame.draw.rect(screen, fc.WHITE, (left_pos_x, pos_y, s.PIXEL_WIDTH, s.PIXEL_WIDTH))# Left Number
-            if(score.SCORE[number_right][i][j]):
-                pygame.draw.rect(screen, fc.WHITE, (right_pos_x, pos_y, s.PIXEL_WIDTH, s.PIXEL_WIDTH))# Right Number
+    # Konvertiere zu String um Anzahl der Ziffern zu bekommen
+    score_str = str(number)
+    num_digits = len(score_str)
+    
+    # Berechne die Gesamtbreite in Pixeln
+    # Jede Ziffer: 3 Spalten breit, mit 1 Space Abstand zwischen Ziffern
+    digit_pixel_width = 4 * s.PIXEL_WIDTH  # 3 Spalten + 1 Space
+    total_pixel_width = num_digits * digit_pixel_width - s.PIXEL_WIDTH  # Letztes Space abziehen
+    
+    # Berechne Start-X Position für Zentrierung im Screen
+    start_x = s.SCREEN_WIDTH // 2 - total_pixel_width // 2
+    
+    # Zeichne jede Ziffer
+    for digit_idx, digit_char in enumerate(score_str):
+        digit = int(digit_char)
+        for i in range(5):  # 5 Reihen pro Ziffer
+            for j in range(3):  # 3 Spalten pro Ziffer
+                pos_x = start_x + digit_idx * digit_pixel_width + j * s.PIXEL_WIDTH
+                pos_y = s.SCORE_POSITION_Y + i * s.PIXEL_WIDTH
+                if score.SCORE[digit][i][j]:
+                    pygame.draw.rect(screen, fc.WHITE, (pos_x, pos_y, s.PIXEL_WIDTH, s.PIXEL_WIDTH))
 
 def draw_score_tetris(screen, number):
     score_str = str(number)  # z.B. "10"

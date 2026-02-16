@@ -3,8 +3,8 @@ import numpy as np
 import os
 
 def png_to_parts_json(
-    png_paths=["1-1.png"],
-    json_path="1.json"
+    png_paths=[],
+    json_path=""
 ):
     parts = {}
 
@@ -75,8 +75,6 @@ def png_to_parts_json(
 
 # DIREKT AUFRUF
 png_to_parts_json(
-    png_paths=[
-        "1-1.png"
-    ],
-    json_path="1.json"
+    png_paths=["2-1.png","2-2.png","2-3.png"],
+    json_path="2.json"
 )
