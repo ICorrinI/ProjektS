@@ -104,17 +104,19 @@ def draw_icon_dino(screen, x_offset, y_offset):
 
 def draw_game_dino(screen, x_offset, y_offset):
     dino_array = np.array([
-        [0, 0, 0, 1, 0],
-        [0, 0, 1, 1, 1],
-        [1, 1, 1, 1, 0],
-        [0, 1, 1, 1, 0],
-        [0, 0, 1, 0, 0],
+        [0, 0, 3, 2, 3],
+        [0, 3, 2, 1, 2],
+        [2, 2, 1, 1, 2],
+        [3, 2, 1, 2, 3],
+        [0, 3, 2, 3, 3],
     ])
 
     dino_colors = {
         0: fc.BLACK,
-        1: fc.WHITE
-    }
+        1: fc.WHITE,
+        2: fc.DINO_BASE,
+        3: fc.DINO_BASE2,
+           }
 
     draw_icon(
         screen,

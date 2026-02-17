@@ -46,13 +46,21 @@ def dino_game(screen, matrix, offset_canvas, started_on_pi, input_handler: input
                 self.on_ground = False
 
         def update(self):
+            # Normale Gravity
             self.vy += s.DINO_GRAVITY
+
+            # Extra Gravity NUR wenn er fällt
+            if self.vy > 0:  
+                self.vy += s.DINO_GRAVITY * 0.9   # ← Faktor anpassen
+
             self.y += self.vy
+
             ground_y = s.SCREEN_HEIGHT - s.GROUND_HEIGHT - self.h
             if self.y >= ground_y:
                 self.y = ground_y
                 self.vy = 0
                 self.on_ground = True
+
 
         def draw(self):
             draw_game_dino(screen, int(self.x), int(self.y))
@@ -154,8 +162,15 @@ def dino_game(screen, matrix, offset_canvas, started_on_pi, input_handler: input
                     if not obs.passed and obs.x + obs.w < dino.x:
                         obs.passed = True
                         score += 1
-                        if score % 5 == 0:
-                            game_speed += s.PIXEL_WIDTH / 4
+                        # --- Game-Speed kontinuierlich nach Score ---
+                        if score < 5:
+                            game_speed = s.GAME_SPEED
+                        elif score < 15:
+                            game_speed = s.GAME_SPEED * 1.05
+                        elif score < 25:
+                            game_speed = s.GAME_SPEED * 1.1
+                        else:
+                            game_speed = s.GAME_SPEED * 1.15
                         last = obstacles[-1]
                         dist = random.randint(s.CACTUS_MIN_DISTANCE, s.CACTUS_MAX_DISTANCE)
                         new_c = Cactus()
