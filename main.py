@@ -57,18 +57,9 @@ else:
 # INPUT HANDLER INIT
 # -------------------------------------------------
 # Hinweis für Benutzer dass matrix rdy ist input zum starten zu nehmen (Tastatur)
-# if started_on_pi:
-#     # Rechteck oben rechts (3*PIXEL_WIDTH x 3*PIXEL_WIDTH)
-#     rect = pygame.Rect(
-#         s.SCREEN_WIDTH - 3*s.PIXEL_WIDTH,  # x-Position oben rechts
-#         0,                                 # y-Position oben
-#         3*s.PIXEL_WIDTH,                   # Breite
-#         3*s.PIXEL_WIDTH                    # Höhe
-#     )
-#     offset_canvas = draw_matrix(screen, matrix, offset_canvas)
 if started_on_pi:
     draw_state1(screen, 255)
-    draw_matrix(screen, matrix, offset_canvas)
+    offset_canvas = draw_matrix(screen, matrix, offset_canvas)
 input_handler = inputs.InputHandler(started_on_pi=started_on_pi)
 
 # -------------------------------------------------
