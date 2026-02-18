@@ -300,6 +300,40 @@ def draw_icon_reaction_runner(screen, x_offset, y_offset):
 
     draw_icon(screen, x_offset, y_offset,pixel_array=icon_array,color_mapping=icon_colors,pixel_size=s.PIXEL_WIDTH)
 
+def draw_icon_stack(screen, x_offset, y_offset):
+    import numpy as np
+    import Settings.colors as fc
+    import Settings.settings as s
+
+    icon_array = np.array([
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,3,3,0,0,0,0,0,0,0],  # falling block
+        [0,0,0,0,0,0,0,3,3,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+
+        [0,0,0,0,2,2,2,2,2,2,2,2,0,0,0,0],  # stack row 1
+        [0,0,0,0,2,2,2,2,2,2,2,2,0,0,0,0],
+        [0,0,0,0,0,0,2,2,2,2,0,0,0,0,0,0],  # stack row 2
+        [0,0,0,0,0,0,2,2,2,2,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,2,2,0,0,0,0,0,0,0],  # stack row 3
+        [0,0,0,0,0,0,0,2,2,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    ])
+
+    icon_colors = {
+        0: fc.BLACK,
+        2: fc.GRAY,     # stack blocks
+        3: fc.YELLOW,   # falling block
+    }
+
+    draw_icon(screen, x_offset, y_offset, pixel_array=icon_array, color_mapping=icon_colors, pixel_size=s.PIXEL_WIDTH)
+
+
 
 def draw_icon(screen, x_offset, y_offset, pixel_array, color_mapping, pixel_size):
     """

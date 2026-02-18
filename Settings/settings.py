@@ -177,3 +177,19 @@ RR_FONT_3X5 = {
     "9": [[1,1,1],[1,0,1],[1,1,1],[0,0,1],[1,1,1]],
     " ": [[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]],
 }
+
+# --- STACK GAME ---
+STACK_GRID = 32
+STACK_FPS = 30
+
+STACK_START_WIDTH = 12          # Startbreite des Blocks (in Matrix-Pixeln)
+STACK_BASE_SPEED = 10.0         # Zellen pro Sekunde
+STACK_SPEED_GAIN = 0.35         # Speed pro Score
+STACK_MAX_SPEED = 20.0          # Cap
+
+# Score position in grid coords (nicht px!)
+STACK_SCORE_X = 1
+STACK_SCORE_Y = 1
+
+# Guide lines (subtil) – kannst du leer lassen []
+STACK_GUIDE_XS = [10, 21]       # zwei Guides, optional

@@ -119,3 +119,10 @@ RR_PLAYER_PALETTE = {
     2: (80, 200, 255),  # window blue
     3: (200, 200, 200), # tire gray
 }
+
+# --- STACK GAME ---
+STACK_BG = BLACK                # auf Matrix clean
+STACK_GUIDE_COLOR = DARK_GRAY   # subtil
+STACK_BLOCK = (200, 200, 200)   # tower blocks (hellgrau)
+STACK_BLOCK_ACTIVE = YELLOW     # moving block (gelb)
+STACK_SCORE_COLOR = WHITE
