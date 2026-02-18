@@ -57,6 +57,14 @@ else:
 # -------------------------------------------------
 # INPUT HANDLER INIT
 # -------------------------------------------------
+# Hinweis für Benutzer dass matrix rdy ist input zum starten zu nehmen (Tastatur)
+if started_on_pi:
+    for x in range(s.SCREEN_WIDTH - 3, s.SCREEN_WIDTH):
+        for y in range(0, 3):
+            screen.set_at((x, y), fc.RED)
+
+    draw_matrix(screen, matrix, offset_canvas)
+
 input_handler = inputs.InputHandler(started_on_pi=started_on_pi)
 
 # -------------------------------------------------

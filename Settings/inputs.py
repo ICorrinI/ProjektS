@@ -77,6 +77,13 @@ class InputHandler:
             }
             self.start_evdev_keyboard()
 
+        self.joy_map = {
+            0: DROP,
+            1: CONFIRM,
+            2: BACK,
+            3: HOLD
+        }
+
         # Joysticks initialisieren
         pygame.joystick.init()
         self.joysticks = [pygame.joystick.Joystick(i) for i in range(pygame.joystick.get_count())]
@@ -100,7 +107,7 @@ class InputHandler:
 
         return False
     
-    # Doodle-Jump-Custom Input
+    # Custom Input delay pro Aktion (z.B. schnelleres Movement, langsameres Jumping)
     def is_pressed_custom(self, action, delay):
         now = time.time()
 
@@ -132,15 +139,25 @@ class InputHandler:
             print("Keine Tastaturen gefunden")
             return None
 
-        print("Bitte Taste auf einer Tastatur drücken...")
+        print("Bitte Taste auf Tastatur ODER Controller drücken...")
+
         while True:
-            r, _, _ = select.select([d.fd for d in candidates], [], [], 0.1)
+            # --- Prüfe evdev Keyboard ---
+            r, _, _ = select.select([d.fd for d in candidates], [], [], 0.05)
             for fd in r:
                 dev = next(d for d in candidates if d.fd == fd)
                 for event in dev.read():
                     if event.type == ecodes.EV_KEY and event.value == 1:
-                        print(f"✅ Aktive Tastatur: {dev.name} ({dev.path})")
+                        print(f"Aktive Tastatur: {dev.name} ({dev.path})")
                         return dev
+                    
+            # --- Prüfe Controller (Pygame) ---
+            pygame.event.pump()
+            for event in pygame.event.get():
+                if event.type in (pygame.JOYBUTTONDOWN, pygame.JOYAXISMOTION):
+                    print("ontroller erkannt Wartephase beendet")
+                    return None
+
 
     def start_evdev_keyboard(self):
         keyboard = self._find_first_active_keyboard()
@@ -196,13 +213,11 @@ class InputHandler:
                         self.pressed.discard(DOWN)
 
             elif event.type == pygame.JOYBUTTONDOWN:
-                if event.button == 0:
-                    self.pressed.add(CONFIRM)
-                elif event.button == 1:
-                    self.pressed.add(BACK)
+                mapped = self.joy_map.get(event.button)
+                if mapped:
+                    self.pressed.add(mapped)
 
             elif event.type == pygame.JOYBUTTONUP:
-                if event.button == 0:
-                    self.pressed.discard(CONFIRM)
-                elif event.button == 1:
-                    self.pressed.discard(BACK)
+                mapped = self.joy_map.get(event.button)
+                if mapped:
+                    self.pressed.discard(mapped)
