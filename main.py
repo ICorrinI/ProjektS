@@ -66,7 +66,9 @@ else:
 #         3*s.PIXEL_WIDTH                    # Höhe
 #     )
 #     offset_canvas = draw_matrix(screen, matrix, offset_canvas)
-
+if started_on_pi:
+    draw_state1(screen, 255)
+    draw_matrix(screen, matrix, offset_canvas)
 input_handler = inputs.InputHandler(started_on_pi=started_on_pi)
 
 # -------------------------------------------------
