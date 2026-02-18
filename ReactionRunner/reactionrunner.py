@@ -7,7 +7,7 @@ from Settings.output import draw_matrix, draw_matrix_representation
 from Settings import inputs
 
 
-def reaction_runner_game(screen, matrix, offset_canvas, started_on_pi, input_handler: inputs.InputHandler):
+def reaction_runner_game(screen, matrix, offset_canvas, started_on_pi, input_handler):
     clock = pygame.time.Clock()
 
     PW = s.PIXEL_WIDTH
@@ -16,10 +16,9 @@ def reaction_runner_game(screen, matrix, offset_canvas, started_on_pi, input_han
     lane_centers = s.RR_LANE_CENTERS
     lane = s.RR_LANE_START
 
-    # --- Player Sprite / Palette aus Settings ---
+    # Player sprite/palette aus Settings
     player_sprite = s.RR_PLAYER_SPRITE
     player_palette = fc.RR_PLAYER_PALETTE
-
     player_w = len(player_sprite[0])
     player_h = len(player_sprite)
     player_y = GRID - player_h - 1
@@ -28,7 +27,7 @@ def reaction_runner_game(screen, matrix, offset_canvas, started_on_pi, input_han
     obs_w = s.RR_OBS_W
     obs_h = s.RR_OBS_H
 
-    # Spawn/Speed
+    # Difficulty
     base_speed = s.RR_BASE_SPEED
     speed_gain = s.RR_SPEED_GAIN
     base_spawn = s.RR_BASE_SPAWN
@@ -39,35 +38,8 @@ def reaction_runner_game(screen, matrix, offset_canvas, started_on_pi, input_han
     lane_line = fc.RR_LANE_LINE
     obstacle_color = fc.RR_OBSTACLE
 
-    # Minimal digit font (kann später auch in Settings ausgelagert werden)
-    FONT_3x5 = {
-        "0": [[1, 1, 1], [1, 0, 1], [1, 0, 1], [1, 0, 1], [1, 1, 1]],
-        "1": [[0, 1, 0], [1, 1, 0], [0, 1, 0], [0, 1, 0], [1, 1, 1]],
-        "2": [[1, 1, 1], [0, 0, 1], [1, 1, 1], [1, 0, 0], [1, 1, 1]],
-        "3": [[1, 1, 1], [0, 0, 1], [1, 1, 1], [0, 0, 1], [1, 1, 1]],
-        "4": [[1, 0, 1], [1, 0, 1], [1, 1, 1], [0, 0, 1], [0, 0, 1]],
-        "5": [[1, 1, 1], [1, 0, 0], [1, 1, 1], [0, 0, 1], [1, 1, 1]],
-        "6": [[1, 1, 1], [1, 0, 0], [1, 1, 1], [1, 0, 1], [1, 1, 1]],
-        "7": [[1, 1, 1], [0, 0, 1], [0, 1, 0], [0, 1, 0], [0, 1, 0]],
-        "8": [[1, 1, 1], [1, 0, 1], [1, 1, 1], [1, 0, 1], [1, 1, 1]],
-        "9": [[1, 1, 1], [1, 0, 1], [1, 1, 1], [0, 0, 1], [1, 1, 1]],
-        " ": [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]],
-    }
-
-    def draw_char(ch: str, mx: int, my: int, color):
-        glyph = FONT_3x5.get(ch, FONT_3x5[" "])
-        for gy in range(5):
-            for gx in range(3):
-                if glyph[gy][gx]:
-                    x = (mx + gx) * PW
-                    y = (my + gy) * PW
-                    pygame.draw.rect(screen, color, (x, y, PW, PW))
-
-    def draw_text(text: str, mx: int, my: int, color):
-        x = mx
-        for ch in text:
-            draw_char(ch, x, my, color)
-            x += 4
+    # Score font aus Settings
+    FONT_3x5 = s.RR_FONT_3X5
 
     def clamp(v, lo, hi):
         return max(lo, min(hi, v))
@@ -82,6 +54,19 @@ def reaction_runner_game(screen, matrix, offset_canvas, started_on_pi, input_han
                     continue
                 pygame.draw.rect(screen, palette[val], rect_from_grid(mx + sx, my + sy, 1, 1))
 
+    def draw_char(ch: str, mx: int, my: int, color):
+        glyph = FONT_3x5.get(ch, FONT_3x5[" "])
+        for gy in range(5):
+            for gx in range(3):
+                if glyph[gy][gx]:
+                    pygame.draw.rect(screen, color, rect_from_grid(mx + gx, my + gy, 1, 1))
+
+    def draw_text(text: str, mx: int, my: int, color):
+        x = mx
+        for ch in text:
+            draw_char(ch, x, my, color)
+            x += 4  # 3 breit + 1 spacing (in grid coords)
+
     def new_run():
         return {
             "obstacles": [],
@@ -94,8 +79,7 @@ def reaction_runner_game(screen, matrix, offset_canvas, started_on_pi, input_han
     state = new_run()
 
     while True:
-        events = pygame.event.get()
-        input_handler.process_events(events)
+        input_handler.process_events(pygame.event.get())
 
         if input_handler.is_pressed(inputs.BACK):
             return
@@ -105,6 +89,7 @@ def reaction_runner_game(screen, matrix, offset_canvas, started_on_pi, input_han
 
         survived_s = (now - state["start_ms"]) / 1000.0
         level = int(survived_s // s.RR_LEVEL_SECONDS)
+
         speed = base_speed + level * speed_gain
         spawn_every = clamp(base_spawn - level * s.RR_SPAWN_DECAY_PER_LEVEL, min_spawn, 5.0)
 
@@ -126,7 +111,7 @@ def reaction_runner_game(screen, matrix, offset_canvas, started_on_pi, input_han
                 chosen = random.randint(0, 2)
                 if random.random() < s.RR_PLAYER_LANE_SPAWN_CHANCE:
                     chosen = lane
-                state["obstacles"].append({"lane": chosen, "y": -2.0})
+                state["obstacles"].append({"lane": chosen, "y": -float(obs_h)})
 
             for o in state["obstacles"]:
                 o["y"] += speed * dt
@@ -139,7 +124,7 @@ def reaction_runner_game(screen, matrix, offset_canvas, started_on_pi, input_han
                     kept.append(o)
             state["obstacles"] = kept
 
-            # FAIR HITBOX
+            # HITBOX (kleiner als Sprite)
             px = lane_centers[lane] - (player_w // 2)
             hit_x = px + s.RR_HITBOX_INSET_X
             hit_y = player_y + s.RR_HITBOX_INSET_Y
@@ -157,35 +142,44 @@ def reaction_runner_game(screen, matrix, offset_canvas, started_on_pi, input_han
 
         # RENDER
         screen.fill(fc.BLACK)
+
+        # Road (optional): wenn du komplett schwarz willst -> RR_ROAD_COLOR = BLACK setzen
         pygame.draw.rect(screen, road_color, (0, 0, s.SCREEN_WIDTH, s.SCREEN_HEIGHT))
 
-        sep1, sep2 = s.RR_LANE_SEP_1, s.RR_LANE_SEP_2
-        pygame.draw.rect(screen, lane_line, rect_from_grid(sep1, 0, 1, GRID))
-        pygame.draw.rect(screen, lane_line, rect_from_grid(sep2, 0, 1, GRID))
+        # Lane lines
+        pygame.draw.rect(screen, lane_line, rect_from_grid(s.RR_LANE_SEP_1, 0, 1, GRID))
+        pygame.draw.rect(screen, lane_line, rect_from_grid(s.RR_LANE_SEP_2, 0, 1, GRID))
 
+        # Obstacles
         for o in state["obstacles"]:
             ox = lane_centers[o["lane"]] - (obs_w // 2)
             oy = int(round(o["y"]))
-            if -5 <= oy <= 35:
+            if -10 <= oy <= GRID + 5:
                 pygame.draw.rect(screen, obstacle_color, rect_from_grid(ox, oy, obs_w, obs_h))
 
+        # Player
         px = lane_centers[lane] - (player_w // 2)
         draw_sprite(player_sprite, px, player_y, player_palette)
 
-        # Score (2 digits)
+        # SCORE: NUR OBEN LINKS
         score_val = min(state["score"], 99)
         tens = score_val // 10
         ones = score_val % 10
-        draw_text(str(tens), 1, 1, fc.WHITE)
-        draw_text(str(ones), 5, 1, fc.WHITE)
+        draw_text(str(tens), s.RR_SCORE_X, s.RR_SCORE_Y, fc.RR_SCORE_COLOR)
+        draw_text(str(ones), s.RR_SCORE_X + 4, s.RR_SCORE_Y, fc.RR_SCORE_COLOR)
 
-        # Game over screen (kein Geflacker, wenn du willst)
+        # GAME OVER: Hintergrund schwarz + Score in der Mitte (optional)
         if not state["alive"]:
             screen.fill(fc.BLACK)
-            draw_text(str(tens), 12, 17, fc.WHITE)
-            draw_text(str(ones), 16, 17, fc.WHITE)
+
+            if s.RR_SHOW_SCORE_ON_GAME_OVER:
+                draw_text(str(tens), s.RR_GAMEOVER_SCORE_X, s.RR_GAMEOVER_SCORE_Y, fc.WHITE)
+                draw_text(str(ones), s.RR_GAMEOVER_SCORE_X + 4, s.RR_GAMEOVER_SCORE_Y, fc.WHITE)
+
+            # kleiner Boden-Strich wie bei euren anderen Games
             pygame.draw.rect(screen, fc.WHITE, (0, s.SCREEN_HEIGHT - PW, s.SCREEN_WIDTH, PW))
 
+        # OUTPUT
         if started_on_pi:
             offset_canvas = draw_matrix(screen, matrix, offset_canvas)
         else:
