@@ -128,6 +128,13 @@ class InputHandler:
     # EVDEV Handling für Pi
     # ---------------------------
     def _find_first_active_keyboard(self):
+        # falls ein Joystick bereits angeschlossen ist, müssen wir gar nicht
+        # nach einer Tastatur suchen – dann überspringen wir die Wartephase
+        pygame.joystick.init()
+        if pygame.joystick.get_count() > 0:
+            print("Controller(s) vorhanden – überspringe Tastatur-Suche")
+            return None
+
         candidates = []
         for path in list_devices():
             dev = InputDevice(path)
@@ -142,6 +149,15 @@ class InputHandler:
         print("Bitte Taste auf Tastatur ODER Controller drücken...")
 
         while True:
+            # Prüfe eventuell während der Wartephase angeschlossene Joysticks
+            # (z.b. Joy‑Cons, Controller usw.). Pygame meldet keine Neuanschlüsse
+            # per Event, deshalb prüfen wir die Anzahl periodisch.
+            pygame.joystick.quit()
+            pygame.joystick.init()
+            if pygame.joystick.get_count() > 0:
+                print("Controller angeschlossen – breche Tastatur-Wartephase ab")
+                return None
+
             # --- Prüfe evdev Keyboard ---
             r, _, _ = select.select([d.fd for d in candidates], [], [], 0.05)
             for fd in r:
@@ -155,7 +171,7 @@ class InputHandler:
             pygame.event.pump()
             for event in pygame.event.get():
                 if event.type in (pygame.JOYBUTTONDOWN, pygame.JOYAXISMOTION):
-                    print("ontroller erkannt Wartephase beendet")
+                    print("Controller erkannt – Wartephase beendet")
                     return None
 
 
