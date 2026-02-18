@@ -15,19 +15,43 @@ def run_homescreen(screen, matrix, offset_canvas, started_on_pi, input_handler: 
     current_state = 0  # 0=state1, 1=state2, 2=state3
     fade_values = [0, 0, 0]  # Fade pro State
 
+    # --- make sure no key is already considered pressed when we start ---
+    # auf dem Pi (oder nach einem vorherigen Spiel) können noch Events in
+    # der Warteschlange liegen oder ein Joystick driftet, so dass die erste
+    # Iteration sofort ein "Start" erkennt und die gesamte Animation
+    # übersprungen wird. Wir löschen daher alle momentan gespeicherten
+    # Zustände und ignorieren die ersten Frames.
+    pygame.event.clear()
+    input_handler.pressed.clear()
+    if hasattr(input_handler, "evdev_pressed"):
+        input_handler.evdev_pressed.clear()
+
+    # Anzahl Rahmen, in denen wir Eingaben grundsätzlich ignorieren
+    ignore_frames = 5
+
     while True:
         events = pygame.event.get()
         input_handler.process_events(events)
 
-        if input_handler.is_pressed(inputs.BACK):
-            return STATE_EXIT
+        # prüfen, ob wir jetzt Eingaben auswerten dürfen
+        back_pressed = False
+        start_pressed = False
+        if ignore_frames <= 0:
+            if input_handler.is_pressed(inputs.BACK):
+                back_pressed = True
 
-        # Start bei irgendeiner Taste
-        for action in [inputs.UP, inputs.DOWN, inputs.LEFT, inputs.RIGHT,
-                       inputs.CONFIRM, inputs.DROP, inputs.HOLD]:
-            if input_handler.is_pressed(action):
-                play_start_animation(screen, clock, started_on_pi)
-                return STATE_START
+            # Start bei irgendeiner Taste (nur nach der Ignorierphase)
+            for action in [inputs.UP, inputs.DOWN, inputs.LEFT, inputs.RIGHT,
+                           inputs.CONFIRM, inputs.DROP, inputs.HOLD]:
+                if input_handler.is_pressed(action):
+                    start_pressed = True
+                    break
+
+        if back_pressed:
+            return STATE_EXIT
+        if start_pressed:
+            play_start_animation(screen, clock, started_on_pi)
+            return STATE_START
 
         # Fade für aktuellen State hochzählen
         fade_values[current_state] = min(255, fade_values[current_state] + FADE_SPEED)
@@ -51,6 +75,10 @@ def run_homescreen(screen, matrix, offset_canvas, started_on_pi, input_handler: 
         # State wechseln
         if fade_values[current_state] >= 255 and current_state < 2:
             current_state += 1
+
+        # nach jeder Aktualisierung einen Ignorier-frame verbrauchen
+        if ignore_frames > 0:
+            ignore_frames -= 1
 
         clock.tick(30)
 
