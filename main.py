@@ -56,10 +56,10 @@ else:
 # -------------------------------------------------
 # INPUT HANDLER INIT
 # -------------------------------------------------
-# Hinweis für Benutzer dass matrix rdy ist input zum starten zu nehmen (Tastatur)
-if started_on_pi:
-    draw_state1(screen, 100)
-    offset_canvas = draw_matrix(screen, matrix, offset_canvas)
+# Hinweis für Benutzer dass matrix rdy ist input zum starten zu nehmen (Tastatur) aktuell nicht weil controller angeschlossen
+# if started_on_pi:
+#     draw_state1(screen, 100)
+#     offset_canvas = draw_matrix(screen, matrix, offset_canvas)
 input_handler = inputs.InputHandler(started_on_pi=started_on_pi)
 
 # -------------------------------------------------
