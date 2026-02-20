@@ -6,6 +6,7 @@ from Mario.mario import mario_game
 from TicTacToe.tictactoe import tictactoe_game
 from ReactionRunner.reactionrunner import reaction_runner_game
 from Stack.stack import stack_game
+from MemoryFlash.memoryflash import memory_flash_game
 
 from Settings.icons import (
     draw_icon_snake,
@@ -17,6 +18,7 @@ from Settings.icons import (
     draw_icon_tictactoe,
     draw_icon_reaction_runner,
     draw_icon_stack,
+    draw_icon_memory_flash
 )
 
 # Jedes Spiel = ein Dict
@@ -76,6 +78,12 @@ GAMES = [
         "id": "stack",
         "icon": draw_icon_stack,
         "run": stack_game,
+        "enabled": True,       
+    },
+    {
+        "id": "memory_flash",
+        "icon": draw_icon_memory_flash,
+        "run": memory_flash_game,
         "enabled": True,       
     },
 ]

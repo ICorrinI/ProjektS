@@ -193,3 +193,11 @@ STACK_SCORE_Y = 1
 
 # Guide lines (subtil) – kannst du leer lassen []
 STACK_GUIDE_XS = [10, 21]       # zwei Guides, optional
+
+# --- Memory Flash ---
+MF_GRID_N = 3
+MF_CELL = 10 * PIXEL_WIDTH          # 3*10 = 30 Matrix-Pixel -> passt perfekt in 32
+MF_START_DELAY_MS = 450             # kurze Pause vor dem Abspielen
+MF_FLASH_ON_MS = 380
+MF_FLASH_OFF_MS = 180
+MF_FAIL_MS = 700

@@ -125,4 +125,26 @@ STACK_BG = BLACK                # auf Matrix clean
 STACK_GUIDE_COLOR = DARK_GRAY   # subtil
 STACK_BLOCK = (200, 200, 200)   # tower blocks (hellgrau)
 STACK_BLOCK_ACTIVE = YELLOW     # moving block (gelb)
-STACK_SCORE_COLOR = WHITE
+STACK_SCORE_COLOR = WHITE   # the “odd one” in 3x3
+
+# ---------------- MemoryFlash ----------------
+# --- Memory Flash ---
+MF_BG = BLACK
+MF_CELL_BG = BLACK
+MF_GRID_COLOR = DARK_GRAY
+MF_CURSOR = WHITE
+MF_FAIL = RED
+
+# Turn indicator
+MF_IND_SHOW = YELLOW
+MF_IND_INPUT = WHITE
+
+# Spiel-Farbpalette (nicht nur blau)
+MF_PALETTE = [
+    (0, 162, 232),   # blue
+    (237, 28, 36),   # red
+    (34, 177, 76),   # green
+    (255, 242, 0),   # yellow
+    (163, 73, 164),  # purple
+    (255, 127, 39),  # orange
+]
