@@ -30,8 +30,8 @@ def draw_matrix_representation(screen):
 # Unterstützt jetzt auch Scores über 99 (flexibel erweitert, zentral positioniert)
 def draw_score(screen, number):
     # Begrenzung für sehr große Zahlen
-    if number > 9999:
-        number = 9999
+    if number > 9999999:
+        number = 9999999
     
     # Konvertiere zu String um Anzahl der Ziffern zu bekommen
     score_str = str(number)

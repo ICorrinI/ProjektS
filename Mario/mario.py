@@ -253,7 +253,7 @@ def mario_game(screen, matrix, offset_canvas, started_on_pi, input_handler: inpu
                                 check_y = self.tile_y + dy
                                 if 0 <= check_x < len(world_map[0]) and 0 <= check_y < len(world_map):
                                     tile = world_map[check_y][check_x]
-                                    if tile != 0 and tile not in (MAP_SPAWN_MARKER, MAP_FINISH_MARKER):
+                                    if tile != 0 and tile not in (MAP_SPAWN_MARKER, MAP_FINISH_MARKER, 12, 13):  # Kollision mit Block (außer Spawn/Finish)
                                         collision = True
                                         break
                             if not collision:
@@ -283,7 +283,7 @@ def mario_game(screen, matrix, offset_canvas, started_on_pi, input_handler: inpu
                         for tx in range(max(0, left_tile), min(len(world_map[0]), right_tile + 1)):
                             if 0 <= bottom_tile < len(world_map):
                                 tile = world_map[bottom_tile][tx]
-                                if tile != 0 and tile not in (MAP_SPAWN_MARKER, MAP_FINISH_MARKER):
+                                if tile != 0 and tile not in (MAP_SPAWN_MARKER, MAP_FINISH_MARKER, 12, 13):
                                     new_y = bottom_tile * PIXEL_WIDTH - self.h
                                     self.vy = 0
                                     self.on_ground = True
@@ -298,7 +298,7 @@ def mario_game(screen, matrix, offset_canvas, started_on_pi, input_handler: inpu
                         for tx in range(max(0, left_tile), min(len(world_map[0]), right_tile + 1)):
                             if top_tile >= 0:
                                 tile = world_map[top_tile][tx]
-                                if tile != 0 and tile not in (MAP_SPAWN_MARKER, MAP_FINISH_MARKER):
+                                if tile != 0 and tile not in (MAP_SPAWN_MARKER, MAP_FINISH_MARKER, 12, 13):
                                     new_y = (top_tile + 1) * PIXEL_WIDTH
                                     self.vy = 0
                                     collision_detected = True

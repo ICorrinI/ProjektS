@@ -67,11 +67,11 @@ input_handler = inputs.InputHandler(started_on_pi=started_on_pi)
 # -------------------------------------------------
 result = run_homescreen(screen, matrix, offset_canvas, started_on_pi, input_handler)
 
-if result == "EXIT":
-    pygame.quit()
-    #if started_on_pi:
-        #os.system("sudo shutdown -h now")
-    exit()
+# if result == "EXIT":
+#     pygame.quit()
+#     #if started_on_pi:
+#         #os.system("sudo shutdown -h now")
+#     exit()
 
 # -------------------------------------------------
 # MENU STATE
@@ -138,7 +138,8 @@ while run:
             game = page_items[selected_index]
             if game["enabled"]:
                 if game["run"] == "EXIT":
-                    run = False
+                    # run = False
+                    result = run_homescreen(screen, matrix, offset_canvas, started_on_pi, input_handler)
                 else:
                     # Spiele sollten InputHandler als Argument bekommen
                     game["run"](screen, matrix, offset_canvas, started_on_pi, input_handler)

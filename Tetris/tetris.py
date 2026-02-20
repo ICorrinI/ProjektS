@@ -185,10 +185,10 @@ def tetris_game(screen, matrix, offset_canvas, started_on_pi, input_handler: inp
                 run = False  # Game Over
 
         # Dynamische Geschwindigkeit je nach Score
-        if score >= 8:
-            current_speed = 3
-        elif score >= 6:
-            current_speed = 5
+        if score >= 15:
+            current_speed = 4
+        elif score >= 7:
+            current_speed = 6
         elif score >= 3:
             current_speed = 10
         else:

@@ -152,7 +152,7 @@ def doodle_jump_game(screen, matrix, offset_canvas, started_on_pi, input_handler
             top_world_y = min((p.rect.y for p in platforms), default=player.world_y)
             for p in platforms:
                 if p.rect.y - camera_y > s.SCREEN_HEIGHT:
-                    score += 1
+                    score += 1293774921
                     filtered = [q for q in platforms if q is not p]
                     new_platforms.append(generate_platform_above(filtered, top_world_y, score))
                 else:
