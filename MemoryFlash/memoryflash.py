@@ -3,23 +3,62 @@ import pygame
 
 import Settings.settings as s
 import Settings.colors as fc
-from Settings.output import draw_matrix, draw_matrix_representation, draw_score
+from Settings.output import draw_matrix, draw_matrix_representation
 from Settings import inputs
 
 
 def memory_flash_game(screen, matrix, offset_canvas, started_on_pi, input_handler: inputs.InputHandler):
     clock = pygame.time.Clock()
-
     PW = s.PIXEL_WIDTH
 
     # --- Layout (3x3 in 32x32 Fläche -> wie TicTacToe: 10 Matrix-Pixel pro Feld) ---
-    grid_n = s.MF_GRID_N  # 3
-    cell = s.MF_CELL      # 10 * PIXEL_WIDTH
+    grid_n = s.MF_GRID_N          # 3
+    cell = s.MF_CELL             # 10 * PIXEL_WIDTH
     grid_size = grid_n * cell
     ox = (s.SCREEN_WIDTH - grid_size) // 2
     oy = (s.SCREEN_HEIGHT - grid_size) // 2
     thickness = PW
 
+    # -----------------------
+    # Score (oben links) – ohne draw_score()
+    # -----------------------
+    def clamp(v, lo, hi):
+        return max(lo, min(hi, v))
+
+    FONT_3x5 = {
+        "0": [[1, 1, 1], [1, 0, 1], [1, 0, 1], [1, 0, 1], [1, 1, 1]],
+        "1": [[0, 1, 0], [1, 1, 0], [0, 1, 0], [0, 1, 0], [1, 1, 1]],
+        "2": [[1, 1, 1], [0, 0, 1], [1, 1, 1], [1, 0, 0], [1, 1, 1]],
+        "3": [[1, 1, 1], [0, 0, 1], [1, 1, 1], [0, 0, 1], [1, 1, 1]],
+        "4": [[1, 0, 1], [1, 0, 1], [1, 1, 1], [0, 0, 1], [0, 0, 1]],
+        "5": [[1, 1, 1], [1, 0, 0], [1, 1, 1], [0, 0, 1], [1, 1, 1]],
+        "6": [[1, 1, 1], [1, 0, 0], [1, 1, 1], [1, 0, 1], [1, 1, 1]],
+        "7": [[1, 1, 1], [0, 0, 1], [0, 1, 0], [0, 1, 0], [0, 1, 0]],
+        "8": [[1, 1, 1], [1, 0, 1], [1, 1, 1], [1, 0, 1], [1, 1, 1]],
+        "9": [[1, 1, 1], [1, 0, 1], [1, 1, 1], [0, 0, 1], [1, 1, 1]],
+        " ": [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]],
+    }
+
+    def rect_from_grid(mx, my, mw=1, mh=1):
+        return pygame.Rect(mx * PW, my * PW, mw * PW, mh * PW)
+
+    def draw_char(ch: str, mx: int, my: int, color):
+        glyph = FONT_3x5.get(ch, FONT_3x5[" "])
+        for gy in range(5):
+            for gx in range(3):
+                if glyph[gy][gx]:
+                    pygame.draw.rect(screen, color, rect_from_grid(mx + gx, my + gy))
+
+    def draw_2digit(number: int, mx: int, my: int, color):
+        number = clamp(int(number), 0, 99)
+        tens = number // 10
+        ones = number % 10
+        draw_char(str(tens), mx, my, color)
+        draw_char(str(ones), mx + 4, my, color)  # 3 + 1 spacing
+
+    # -----------------------
+    # Grid helpers
+    # -----------------------
     def cell_rect(r, c):
         return pygame.Rect(ox + c * cell, oy + r * cell, cell, cell)
 
@@ -29,7 +68,9 @@ def memory_flash_game(screen, matrix, offset_canvas, started_on_pi, input_handle
     def rc_from_idx(idx):
         return idx // grid_n, idx % grid_n
 
-    # --- Game State ---
+    # -----------------------
+    # Game state
+    # -----------------------
     # sequence element: (cell_index, color_tuple)
     sequence = []
     score = 0
@@ -41,15 +82,16 @@ def memory_flash_game(screen, matrix, offset_canvas, started_on_pi, input_handle
     input_pos = 0
 
     # show state machine
-    show_step = 0           # counts sub-steps (ON/OFF)
-    flash_on = True
+    show_step = 0
     next_switch_ms = 0
     active_idx = None
     active_color = None
 
     fail_until_ms = 0
 
-    # --- helpers ---
+    # -----------------------
+    # helpers
+    # -----------------------
     def add_step():
         cell_idx = random.randint(0, grid_n * grid_n - 1)
         color = random.choice(fc.MF_PALETTE)
@@ -57,7 +99,7 @@ def memory_flash_game(screen, matrix, offset_canvas, started_on_pi, input_handle
 
     def reset_run():
         nonlocal sequence, score, cursor_r, cursor_c, phase, input_pos
-        nonlocal show_step, flash_on, next_switch_ms, active_idx, active_color
+        nonlocal show_step, next_switch_ms, active_idx, active_color
         nonlocal fail_until_ms
 
         sequence = []
@@ -70,7 +112,6 @@ def memory_flash_game(screen, matrix, offset_canvas, started_on_pi, input_handle
         input_pos = 0
 
         show_step = 0
-        flash_on = True
         next_switch_ms = pygame.time.get_ticks() + s.MF_START_DELAY_MS
         active_idx = None
         active_color = None
@@ -78,11 +119,10 @@ def memory_flash_game(screen, matrix, offset_canvas, started_on_pi, input_handle
         fail_until_ms = 0
 
     def start_show():
-        nonlocal phase, input_pos, show_step, flash_on, next_switch_ms, active_idx, active_color
+        nonlocal phase, input_pos, show_step, next_switch_ms, active_idx, active_color
         phase = "SHOW"
         input_pos = 0
         show_step = 0
-        flash_on = True
         active_idx = None
         active_color = None
         next_switch_ms = pygame.time.get_ticks() + s.MF_START_DELAY_MS
@@ -95,12 +135,16 @@ def memory_flash_game(screen, matrix, offset_canvas, started_on_pi, input_handle
         active_color = None
 
     def start_fail():
-        nonlocal phase, fail_until_ms
+        nonlocal phase, fail_until_ms, active_idx, active_color
         phase = "FAIL"
         fail_until_ms = pygame.time.get_ticks() + s.MF_FAIL_MS
+        active_idx, active_color = None, None
 
     reset_run()
 
+    # -----------------------
+    # main loop
+    # -----------------------
     while True:
         now = pygame.time.get_ticks()
         events = pygame.event.get()
@@ -114,10 +158,9 @@ def memory_flash_game(screen, matrix, offset_canvas, started_on_pi, input_handle
         # UPDATE
         # --------------------
         if phase == "SHOW":
-            # step toggles between ON and OFF for each sequence element
             if now >= next_switch_ms:
+                # SHOW toggles between ON and OFF for each sequence element
                 if show_step >= len(sequence) * 2:
-                    # done showing
                     start_input()
                 else:
                     seq_i = show_step // 2
@@ -154,7 +197,6 @@ def memory_flash_game(screen, matrix, offset_canvas, started_on_pi, input_handle
 
                     input_pos += 1
                     if input_pos >= len(sequence):
-                        # round complete
                         score += 1
                         add_step()
                         start_show()
@@ -170,14 +212,14 @@ def memory_flash_game(screen, matrix, offset_canvas, started_on_pi, input_handle
         # --------------------
         screen.fill(fc.MF_BG)
 
-        # static grid (dark)
+        # static grid
         for r in range(grid_n):
             for c in range(grid_n):
                 rect = cell_rect(r, c)
                 pygame.draw.rect(screen, fc.MF_CELL_BG, rect)
                 pygame.draw.rect(screen, fc.MF_GRID_COLOR, rect, thickness)
 
-        # active flash cell (show phase OR optional input feedback)
+        # active flash cell (SHOW phase OR tiny input feedback)
         if active_idx is not None and active_color is not None:
             ar, ac = rc_from_idx(active_idx)
             rect = cell_rect(ar, ac)
@@ -189,23 +231,21 @@ def memory_flash_game(screen, matrix, offset_canvas, started_on_pi, input_handle
             cur = cell_rect(cursor_r, cursor_c)
             pygame.draw.rect(screen, fc.MF_CURSOR, cur, thickness)
 
-        # fail overlay
+        # fail overlay (score bleibt sichtbar)
         if phase == "FAIL":
             screen.fill(fc.MF_FAIL)
-            # score bleibt sichtbar
-            # optional: white bottom bar
             pygame.draw.rect(screen, fc.WHITE, (0, s.SCREEN_HEIGHT - PW, s.SCREEN_WIDTH, PW))
 
-        # turn indicator (damit man IMMER checkt ob man dran ist)
-        # SHOW = gelber Punkt, INPUT = weißer Punkt
+        # turn indicator: SHOW = gelb, INPUT = weiß, FAIL = weiß
         ind_color = fc.MF_IND_SHOW if phase == "SHOW" else fc.MF_IND_INPUT
         if phase == "FAIL":
             ind_color = fc.WHITE
         pygame.draw.rect(screen, ind_color, (PW, s.SCREEN_HEIGHT - 2 * PW, PW, PW))
 
-        # score (wie andere games)
-        draw_score(screen, score)
+        # score oben links (00..99)
+        draw_2digit(score, 1, 1, fc.WHITE)
 
+        # output
         if started_on_pi:
             offset_canvas = draw_matrix(screen, matrix, offset_canvas)
         else:

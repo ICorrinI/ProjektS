@@ -205,3 +205,8 @@ MF_START_DELAY_MS = 450             # kurze Pause vor dem Abspielen
 MF_FLASH_ON_MS = 380
 MF_FLASH_OFF_MS = 180
 MF_FAIL_MS = 700
+
+# Memory Flash HUD
+MF_HUD_ROWS = 6          # Platz für "SC" + 2 digits
+MF_SCORE_X = 1
+MF_SCORE_Y = 1
