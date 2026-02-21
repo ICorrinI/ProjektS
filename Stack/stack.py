@@ -11,18 +11,12 @@ def stack_game(screen, matrix, offset_canvas, started_on_pi, input_handler: inpu
     """
     STACK / TIMING TOWER (Singleplayer)
 
-    Idee:
-      - Ein Block fährt links <-> rechts
-      - CONFIRM droppt den Block
-      - Überlappung bleibt stehen, Rest wird abgeschnitten
-      - Wenn keine Überlappung: Game Over
-      - Speed steigt mit Höhe
-      - Score = Höhe (0..99)
-
-    Controls:
-      - LEFT/RIGHT optional: Richtung flip (nice feeling)
-      - CONFIRM: drop
-      - BACK: zurück ins Menü
+    - Block fährt links <-> rechts
+    - CONFIRM setzt Block ab
+    - Überlappung bleibt stehen, Rest wird abgeschnitten
+    - Wenn keine Überlappung: Game Over
+    - Speed steigt mit Höhe
+    - Score = Höhe (0..99)
     """
 
     clock = pygame.time.Clock()
@@ -66,6 +60,11 @@ def stack_game(screen, matrix, offset_canvas, started_on_pi, input_handler: inpu
         draw_char(str(tens), mx, my, color)
         draw_char(str(ones), mx + 4, my, color)  # 3 + 1 spacing
 
+    # Farbwahl: pro Layer zyklisch
+    def layer_color(layer_index: int):
+        colors = fc.STACK_BLOCK_COLORS
+        return colors[layer_index % len(colors)]
+
     # --- game state ---
     def new_run():
         start_w = s.STACK_START_WIDTH
@@ -73,23 +72,22 @@ def stack_game(screen, matrix, offset_canvas, started_on_pi, input_handler: inpu
         return {
             "alive": True,
             "score": 0,
-            "tower": [],  # list of (x, y, w)
+            # tower items: (x, y, w, color)
+            "tower": [],
             "cur_y": start_y,
             "cur_w": start_w,
-            "cur_x": 0,
+            "cur_x": 0.0,
             "dir": 1,  # 1 right, -1 left
-            "speed": s.STACK_BASE_SPEED,  # cells per second
-            "last_ms": pygame.time.get_ticks(),
-            "shake_ms": 0,
+            "speed": float(s.STACK_BASE_SPEED),  # cells per second
         }
 
     state = new_run()
 
     # Init: erste Basis in der Mitte “fest”
     base_x = (GRID - state["cur_w"]) // 2
-    state["tower"].append((base_x, state["cur_y"], state["cur_w"]))
+    state["tower"].append((base_x, state["cur_y"], state["cur_w"], layer_color(0)))
     state["cur_y"] -= 1
-    state["cur_x"] = 0
+    state["cur_x"] = 0.0
     state["dir"] = 1
 
     while True:
@@ -99,7 +97,6 @@ def stack_game(screen, matrix, offset_canvas, started_on_pi, input_handler: inpu
         if input_handler.is_pressed(inputs.BACK):
             return
 
-        now = pygame.time.get_ticks()
         dt = clock.get_time() / 1000.0
 
         # restart on game over
@@ -107,16 +104,14 @@ def stack_game(screen, matrix, offset_canvas, started_on_pi, input_handler: inpu
             if input_handler.is_pressed(inputs.CONFIRM):
                 state = new_run()
                 base_x = (GRID - state["cur_w"]) // 2
-                state["tower"].append((base_x, state["cur_y"], state["cur_w"]))
+                state["tower"].append((base_x, state["cur_y"], state["cur_w"], layer_color(0)))
                 state["cur_y"] -= 1
-                state["cur_x"] = 0
+                state["cur_x"] = 0.0
                 state["dir"] = 1
             else:
                 # render game over screen
                 screen.fill(fc.STACK_BG)
-                # show final score top-left
                 draw_2digit(state["score"], s.STACK_SCORE_X, s.STACK_SCORE_Y, fc.STACK_SCORE_COLOR)
-                # small border line bottom (like your style)
                 pygame.draw.rect(screen, fc.WHITE, (0, s.SCREEN_HEIGHT - PW, s.SCREEN_WIDTH, PW))
 
                 if started_on_pi:
@@ -132,14 +127,14 @@ def stack_game(screen, matrix, offset_canvas, started_on_pi, input_handler: inpu
         if input_handler.is_pressed(inputs.LEFT) or input_handler.is_pressed(inputs.RIGHT):
             state["dir"] *= -1
 
-        # move current block
+        # move current block (left/right)
         max_x = GRID - state["cur_w"]
         state["cur_x"] += state["dir"] * state["speed"] * dt
         if state["cur_x"] <= 0:
-            state["cur_x"] = 0
+            state["cur_x"] = 0.0
             state["dir"] = 1
         elif state["cur_x"] >= max_x:
-            state["cur_x"] = max_x
+            state["cur_x"] = float(max_x)
             state["dir"] = -1
 
         # drop block
@@ -148,10 +143,8 @@ def stack_game(screen, matrix, offset_canvas, started_on_pi, input_handler: inpu
             cur_w = state["cur_w"]
             cur_y = state["cur_y"]
 
-            # compare with last placed
-            last_x, last_y, last_w = state["tower"][-1]
+            last_x, last_y, last_w, _last_col = state["tower"][-1]
 
-            # overlap interval
             left = max(cur_x_int, last_x)
             right = min(cur_x_int + cur_w, last_x + last_w)
             overlap = right - left
@@ -159,11 +152,14 @@ def stack_game(screen, matrix, offset_canvas, started_on_pi, input_handler: inpu
             if overlap <= 0:
                 state["alive"] = False
             else:
-                # place trimmed block
                 placed_x = left
                 placed_w = overlap
-                state["tower"].append((placed_x, cur_y, placed_w))
 
+                # color for this placed layer = based on score+1 (weil score zählt placed layers nach base)
+                next_layer_index = len(state["tower"])  # base was layer 0, next is 1,2,3...
+                placed_color = layer_color(next_layer_index)
+
+                state["tower"].append((placed_x, cur_y, placed_w, placed_color))
                 state["score"] = clamp(state["score"] + 1, 0, 99)
 
                 # next row
@@ -172,42 +168,41 @@ def stack_game(screen, matrix, offset_canvas, started_on_pi, input_handler: inpu
 
                 # speed up slightly
                 state["speed"] = min(
-                    s.STACK_MAX_SPEED,
-                    s.STACK_BASE_SPEED + state["score"] * s.STACK_SPEED_GAIN
+                    float(s.STACK_MAX_SPEED),
+                    float(s.STACK_BASE_SPEED) + state["score"] * float(s.STACK_SPEED_GAIN)
                 )
 
-                # if reached top: wrap (continue endless, but keep last rows)
+                # if reached top: wrap endless (shift tower down)
                 if state["cur_y"] < 0:
-                    # shift tower down by 1 (drop oldest)
-                    # keep it visually stable & endless
-                    state["tower"] = [(x, y + 1, w) for (x, y, w) in state["tower"] if y + 1 < GRID]
+                    state["tower"] = [(x, y + 1, w, col) for (x, y, w, col) in state["tower"] if y + 1 < GRID]
                     state["cur_y"] = 0
 
                 # new moving block start position
-                # alternate start side for variety
                 if random.random() < 0.5:
-                    state["cur_x"] = 0
+                    state["cur_x"] = 0.0
                     state["dir"] = 1
                 else:
-                    state["cur_x"] = GRID - state["cur_w"]
+                    state["cur_x"] = float(GRID - state["cur_w"])
                     state["dir"] = -1
 
         # --- render ---
         screen.fill(fc.STACK_BG)
 
-        # optional lane/guide lines (subtle vertical guides)
+        # guide lines
         for gx in s.STACK_GUIDE_XS:
             pygame.draw.rect(screen, fc.STACK_GUIDE_COLOR, rect_from_grid(gx, 0, 1, GRID))
 
-        # draw placed tower blocks
-        for (x, y, w) in state["tower"]:
-            pygame.draw.rect(screen, fc.STACK_BLOCK, rect_from_grid(x, y, w, 1))
+        # draw placed tower blocks (with their colors)
+        for (x, y, w, col) in state["tower"]:
+            pygame.draw.rect(screen, col, rect_from_grid(x, y, w, 1))
 
-        # draw moving block
+        # draw moving block (use next layer color too)
         cur_x_int = int(round(state["cur_x"]))
-        pygame.draw.rect(screen, fc.STACK_BLOCK_ACTIVE, rect_from_grid(cur_x_int, state["cur_y"], state["cur_w"], 1))
+        active_layer_index = len(state["tower"])  # next placed layer
+        active_color = layer_color(active_layer_index)
+        pygame.draw.rect(screen, active_color, rect_from_grid(cur_x_int, state["cur_y"], state["cur_w"], 1))
 
-        # score top-left (00..99)
+        # score top-left
         draw_2digit(state["score"], s.STACK_SCORE_X, s.STACK_SCORE_Y, fc.STACK_SCORE_COLOR)
 
         # output

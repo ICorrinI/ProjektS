@@ -120,12 +120,23 @@ RR_PLAYER_PALETTE = {
     3: (200, 200, 200), # tire gray
 }
 
-# --- STACK GAME ---
-STACK_BG = BLACK                # auf Matrix clean
-STACK_GUIDE_COLOR = DARK_GRAY   # subtil
-STACK_BLOCK = (200, 200, 200)   # tower blocks (hellgrau)
-STACK_BLOCK_ACTIVE = YELLOW     # moving block (gelb)
-STACK_SCORE_COLOR = WHITE   # the “odd one” in 3x3
+# -------------------------
+# Stack
+# -------------------------
+STACK_BG = BLACK
+
+# 6 Farben im Zyklus (kannst du beliebig ändern)
+STACK_BLOCK_COLORS = [
+    (255, 242, 0),    # yellow
+    (0, 162, 232),    # blue
+    (237, 28, 36),    # red
+    (34, 177, 76),    # green
+    (163, 73, 164),   # purple
+    (255, 127, 39),   # orange
+]
+
+STACK_SCORE_COLOR = WHITE
+STACK_GUIDE_COLOR = DARK_GRAY
 
 # ---------------- MemoryFlash ----------------
 # --- Memory Flash ---

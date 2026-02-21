@@ -47,6 +47,6 @@ def png_to_draw_function(
 
 # Beispiel
 png_to_draw_function(
-    "MemoryFlash.png",
-    function_name="draw_icon_memory_flash"
+    "Stack.png",
+    function_name="draw_icon_stack"
 )
