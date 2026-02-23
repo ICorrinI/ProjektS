@@ -3,7 +3,7 @@ import pygame
 
 import Settings.settings as s
 import Settings.colors as fc
-from Settings.output import draw_matrix, draw_matrix_representation
+from Settings.output import draw_matrix, draw_matrix_representation, draw_score
 from Settings import inputs
 
 
@@ -172,10 +172,7 @@ def reaction_runner_game(screen, matrix, offset_canvas, started_on_pi, input_han
         if not state["alive"]:
             screen.fill(fc.BLACK)
 
-            if s.RR_SHOW_SCORE_ON_GAME_OVER:
-                draw_text(str(tens), s.RR_GAMEOVER_SCORE_X, s.RR_GAMEOVER_SCORE_Y, fc.WHITE)
-                draw_text(str(ones), s.RR_GAMEOVER_SCORE_X + 4, s.RR_GAMEOVER_SCORE_Y, fc.WHITE)
-
+            draw_score(screen, state["score"])
             # kleiner Boden-Strich wie bei euren anderen Games
             pygame.draw.rect(screen, fc.WHITE, (0, s.SCREEN_HEIGHT - PW, s.SCREEN_WIDTH, PW))
 
