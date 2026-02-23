@@ -101,7 +101,7 @@ def stack_game(screen, matrix, offset_canvas, started_on_pi, input_handler: inpu
 
         # restart on game over
         if not state["alive"]:
-            if input_handler.is_pressed(inputs.CONFIRM):
+            if input_handler.is_pressed_custom(inputs.CONFIRM,1):
                 state = new_run()
                 base_x = (GRID - state["cur_w"]) // 2
                 state["tower"].append((base_x, state["cur_y"], state["cur_w"], layer_color(0)))
@@ -123,10 +123,6 @@ def stack_game(screen, matrix, offset_canvas, started_on_pi, input_handler: inpu
                 clock.tick(s.STACK_FPS)
                 continue
 
-        # optional: flip direction for nicer control feel
-        if input_handler.is_pressed(inputs.LEFT) or input_handler.is_pressed(inputs.RIGHT):
-            state["dir"] *= -1
-
         # move current block (left/right)
         max_x = GRID - state["cur_w"]
         state["cur_x"] += state["dir"] * state["speed"] * dt
@@ -138,7 +134,7 @@ def stack_game(screen, matrix, offset_canvas, started_on_pi, input_handler: inpu
             state["dir"] = -1
 
         # drop block
-        if input_handler.is_pressed(inputs.CONFIRM):
+        if input_handler.is_pressed_custom(inputs.CONFIRM,0.5):
             cur_x_int = int(round(state["cur_x"]))
             cur_w = state["cur_w"]
             cur_y = state["cur_y"]

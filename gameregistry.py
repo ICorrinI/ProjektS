@@ -39,17 +39,10 @@ GAMES = [
     },
     {
         "id": "dino",
-        "icon": draw_icon_dino,   # Dummy-Icon
+        "icon": draw_icon_dino,
         "run": dino_game,
         "enabled": True,
     },
-    {
-        "id": "poweroff",
-        "icon": draw_icon_poweroff,
-        "run": "EXIT",
-        "enabled": True,
-    },
-    # --- Seite 2---
     {
         "id": "tetris",
         "icon": draw_icon_tetris,
@@ -85,5 +78,11 @@ GAMES = [
         "icon": draw_icon_memory_flash,
         "run": memory_flash_game,
         "enabled": True,       
+    },
+        {
+        "id": "poweroff",
+        "icon": draw_icon_poweroff,
+        "run": "EXIT",
+        "enabled": True,
     },
 ]
