@@ -85,3 +85,79 @@ TETRIS_BORDER = (80, 80, 80)
 TETRIS_BG = BLACK
 UI_BG = (40, 40, 40)
 TETRIS_HOLD = (150, 150, 150)
+
+
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+RED   = (220, 40, 40)
+GREEN = (40, 200, 40)
+BLUE  = (60, 160, 255)
+YELLOW = (255, 230, 0)
+DARK_GRAY = (70, 70, 70)
+
+# --- TicTacToe ---
+TTT_GRID = DARK_GRAY
+TTT_WIN_BG = GREEN
+TTT_DRAW_BG = RED
+
+TTT_X_COLORS = {0: BLACK, 1: RED}
+TTT_O_COLORS = {0: BLACK, 1: BLUE}
+
+TTT_CONFETTI_COLORS = [WHITE, YELLOW, GREEN, RED, BLUE]
+
+TTT_LOSE_COLOR = {
+    "X": BLUE,   # O lost
+    "O": RED     # X lost
+}
+
+# --- Reaction Runner ---
+RR_ROAD_COLOR = BLACK          # <-- damit ist der Hintergrund auf Matrix clean
+RR_LANE_LINE  = GRAY
+RR_OBSTACLE   = RED
+RR_SCORE_COLOR = WHITE
+
+RR_PLAYER_PALETTE = {
+    1: (255, 235, 0),   # car yellow
+    2: (80, 200, 255),  # window blue
+    3: (200, 200, 200), # tire gray
+}
+
+# -------------------------
+# Stack
+# -------------------------
+STACK_BG = BLACK
+
+# 6 Farben im Zyklus (kannst du beliebig ändern)
+STACK_BLOCK_COLORS = [
+    (255, 242, 0),    # yellow
+    (0, 162, 232),    # blue
+    (237, 28, 36),    # red
+    (34, 177, 76),    # green
+    (163, 73, 164),   # purple
+    (255, 127, 39),   # orange
+]
+
+STACK_SCORE_COLOR = WHITE
+STACK_GUIDE_COLOR = DARK_GRAY
+
+# ---------------- MemoryFlash ----------------
+# --- Memory Flash ---
+MF_BG = BLACK
+MF_CELL_BG = BLACK
+MF_GRID_COLOR = DARK_GRAY
+MF_CURSOR = WHITE
+MF_FAIL = RED
+
+# Turn indicator
+MF_IND_SHOW = YELLOW
+MF_IND_INPUT = WHITE
+
+# Spiel-Farbpalette (nicht nur blau)
+MF_PALETTE = [
+    (0, 162, 232),   # blue
+    (237, 28, 36),   # red
+    (34, 177, 76),   # green
+    (255, 242, 0),   # yellow
+    (163, 73, 164),  # purple
+    (255, 127, 39),  # orange
+]

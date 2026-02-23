@@ -47,6 +47,6 @@ def png_to_draw_function(
 
 # Beispiel
 png_to_draw_function(
-    "Mario.png",
-    function_name="draw_icon_mario"
+    "Stack.png",
+    function_name="draw_icon_stack"
 )
