@@ -3,7 +3,7 @@ import pygame
 
 import Settings.settings as s
 import Settings.colors as fc
-from Settings.output import draw_matrix, draw_matrix_representation
+from Settings.output import draw_matrix, draw_matrix_representation, draw_score
 from Settings import inputs
 
 
@@ -137,7 +137,8 @@ def memory_flash_game(screen, matrix, offset_canvas, started_on_pi, input_handle
     def start_fail():
         nonlocal phase, fail_until_ms, active_idx, active_color
         phase = "FAIL"
-        fail_until_ms = pygame.time.get_ticks() + s.MF_FAIL_MS
+        # Warte z.B. nur 500ms, bevor die Eingabe zum Neustart freigeschaltet wird
+        fail_until_ms = pygame.time.get_ticks() + 500 
         active_idx, active_color = None, None
 
     reset_run()
@@ -159,42 +160,31 @@ def memory_flash_game(screen, matrix, offset_canvas, started_on_pi, input_handle
         # --------------------
         if phase == "SHOW":
             if now >= next_switch_ms:
-                # SHOW toggles between ON and OFF for each sequence element
                 if show_step >= len(sequence) * 2:
                     start_input()
                 else:
                     seq_i = show_step // 2
                     is_on = (show_step % 2 == 0)
-
                     if is_on:
                         active_idx, active_color = sequence[seq_i]
                         next_switch_ms = now + s.MF_FLASH_ON_MS
                     else:
                         active_idx, active_color = None, None
                         next_switch_ms = now + s.MF_FLASH_OFF_MS
-
                     show_step += 1
 
         elif phase == "INPUT":
-            # move cursor
-            if input_handler.is_pressed(inputs.LEFT):
-                cursor_c = max(0, cursor_c - 1)
-            if input_handler.is_pressed(inputs.RIGHT):
-                cursor_c = min(grid_n - 1, cursor_c + 1)
-            if input_handler.is_pressed(inputs.UP):
-                cursor_r = max(0, cursor_r - 1)
-            if input_handler.is_pressed(inputs.DOWN):
-                cursor_r = min(grid_n - 1, cursor_r + 1)
+            # Cursor-Steuerung
+            if input_handler.is_pressed(inputs.LEFT): cursor_c = max(0, cursor_c - 1)
+            if input_handler.is_pressed(inputs.RIGHT): cursor_c = min(grid_n - 1, cursor_c + 1)
+            if input_handler.is_pressed(inputs.UP): cursor_r = max(0, cursor_r - 1)
+            if input_handler.is_pressed(inputs.DOWN): cursor_r = min(grid_n - 1, cursor_r + 1)
 
-            # confirm selection
             if input_handler.is_pressed(inputs.CONFIRM):
                 chosen = idx_from_rc(cursor_r, cursor_c)
                 expected_idx, expected_color = sequence[input_pos]
-
                 if chosen == expected_idx:
-                    # tiny feedback flash (optional)
                     active_idx, active_color = expected_idx, expected_color
-
                     input_pos += 1
                     if input_pos >= len(sequence):
                         score += 1
@@ -204,48 +194,56 @@ def memory_flash_game(screen, matrix, offset_canvas, started_on_pi, input_handle
                     start_fail()
 
         elif phase == "FAIL":
+            # NUR LOGIK: Warten auf Tastendruck nach Ablauf der Sperrzeit
             if now >= fail_until_ms:
-                reset_run()
+                if input_handler.is_pressed(inputs.CONFIRM):
+                    reset_run()
 
         # --------------------
         # RENDER
         # --------------------
-        screen.fill(fc.MF_BG)
+        if phase == "FAIL":
+            # 1. Ganzen Bildschirm Fail-Farbe füllen
+            screen.fill(fc.MF_FAIL)
 
-        # static grid
-        for r in range(grid_n):
-            for c in range(grid_n):
-                rect = cell_rect(r, c)
-                pygame.draw.rect(screen, fc.MF_CELL_BG, rect)
+            #2. Score anzeigen
+            draw_score(screen, score)
+            
+            # 3. Einen weißen Balken als Bestätigungs-Indikator (optional)
+            if now >= fail_until_ms:
+                 pygame.draw.rect(screen, fc.WHITE, (0, s.SCREEN_HEIGHT - PW, s.SCREEN_WIDTH, PW))
+        else:
+            # Normaler Spiel-Bildschirm
+            screen.fill(fc.MF_BG)
+
+            # Gitter zeichnen
+            for r in range(grid_n):
+                for c in range(grid_n):
+                    rect = cell_rect(r, c)
+                    pygame.draw.rect(screen, fc.MF_CELL_BG, rect)
+                    pygame.draw.rect(screen, fc.MF_GRID_COLOR, rect, thickness)
+
+            # Aktive Zelle (beim Zeigen oder Feedback)
+            if active_idx is not None and active_color is not None:
+                ar, ac = rc_from_idx(active_idx)
+                rect = cell_rect(ar, ac)
+                pygame.draw.rect(screen, active_color, rect)
                 pygame.draw.rect(screen, fc.MF_GRID_COLOR, rect, thickness)
 
-        # active flash cell (SHOW phase OR tiny input feedback)
-        if active_idx is not None and active_color is not None:
-            ar, ac = rc_from_idx(active_idx)
-            rect = cell_rect(ar, ac)
-            pygame.draw.rect(screen, active_color, rect)
-            pygame.draw.rect(screen, fc.MF_GRID_COLOR, rect, thickness)
+            # Cursor (nur in der Input-Phase)
+            if phase == "INPUT":
+                cur = cell_rect(cursor_r, cursor_c)
+                pygame.draw.rect(screen, fc.MF_CURSOR, cur, thickness)
 
-        # cursor only in input phase
-        if phase == "INPUT":
-            cur = cell_rect(cursor_r, cursor_c)
-            pygame.draw.rect(screen, fc.MF_CURSOR, cur, thickness)
+            # Status-Indikator unten links
+            ind_color = fc.MF_IND_SHOW if phase == "SHOW" else fc.MF_IND_INPUT
+            if phase == "FAIL": ind_color = fc.WHITE
+            pygame.draw.rect(screen, ind_color, (PW, s.SCREEN_HEIGHT - 2 * PW, PW, PW))
 
-        # fail overlay (score bleibt sichtbar)
-        if phase == "FAIL":
-            screen.fill(fc.MF_FAIL)
-            pygame.draw.rect(screen, fc.WHITE, (0, s.SCREEN_HEIGHT - PW, s.SCREEN_WIDTH, PW))
+            # Score oben links
+            draw_2digit(score, 1, 1, fc.WHITE)
 
-        # turn indicator: SHOW = gelb, INPUT = weiß, FAIL = weiß
-        ind_color = fc.MF_IND_SHOW if phase == "SHOW" else fc.MF_IND_INPUT
-        if phase == "FAIL":
-            ind_color = fc.WHITE
-        pygame.draw.rect(screen, ind_color, (PW, s.SCREEN_HEIGHT - 2 * PW, PW, PW))
-
-        # score oben links (00..99)
-        draw_2digit(score, 1, 1, fc.WHITE)
-
-        # output
+        # Output / Display Update
         if started_on_pi:
             offset_canvas = draw_matrix(screen, matrix, offset_canvas)
         else:

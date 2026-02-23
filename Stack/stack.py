@@ -3,7 +3,7 @@ import pygame
 
 import Settings.settings as s
 import Settings.colors as fc
-from Settings.output import draw_matrix, draw_matrix_representation
+from Settings.output import draw_matrix, draw_matrix_representation, draw_score
 from Settings import inputs
 
 
@@ -111,7 +111,7 @@ def stack_game(screen, matrix, offset_canvas, started_on_pi, input_handler: inpu
             else:
                 # render game over screen
                 screen.fill(fc.STACK_BG)
-                draw_2digit(state["score"], s.STACK_SCORE_X, s.STACK_SCORE_Y, fc.STACK_SCORE_COLOR)
+                draw_score(screen, state["score"])
                 pygame.draw.rect(screen, fc.WHITE, (0, s.SCREEN_HEIGHT - PW, s.SCREEN_WIDTH, PW))
 
                 if started_on_pi:
@@ -187,10 +187,6 @@ def stack_game(screen, matrix, offset_canvas, started_on_pi, input_handler: inpu
 
         # --- render ---
         screen.fill(fc.STACK_BG)
-
-        # guide lines
-        for gx in s.STACK_GUIDE_XS:
-            pygame.draw.rect(screen, fc.STACK_GUIDE_COLOR, rect_from_grid(gx, 0, 1, GRID))
 
         # draw placed tower blocks (with their colors)
         for (x, y, w, col) in state["tower"]:
